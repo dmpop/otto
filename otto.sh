@@ -32,12 +32,13 @@ Usage:
 Options:
   -d --directory    Specifies the source directory
   -g --geotag       Geotag using coordinates of the specified location (city)
+  -c --correlate    Geocorrelate using the specified GPX file
 EOF
   exit 1
 }
 
 # Specify options
-OPTS=$(getopt -o d:g: -l directory:geotag: -- "$@")
+OPTS=$(getopt -o d:g:c -l directory:geotag:correlate -- "$@")
 [[ $# -eq 0 ]] && usage
 eval set -- "$OPTS"
 
@@ -46,6 +47,7 @@ while true; do
   case "$1" in
     -d | --directory ) src="$2"; shift 2;;
     -g | --geotag ) location="$2"; shift 2;;
+    -c | --correlate) gpx="$3"; shift 2;;
     -- ) shift; break ;;
     * ) break ;;
   esac
@@ -125,6 +127,7 @@ if [ ! -z "$location" ]; then
     fi
 fi
 
+# Geotag if the -g parameter is not empty
 if [ ! -z "$location" ]; then
     echo
     echo "--------------"
@@ -138,6 +141,11 @@ if [ ! -z "$location" ]; then
             file=$(echo -e "$results" | sed -n "$line p")
             exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref "$file"
         done
+    fi
+
+# Geocorrecate if -c parameter is not empty
+if [ ! -z "$gpx" ]; then
+    exiftool -overwrite_original -r -ext jpg -geotag "$gpx" -geosync=180 "$target"
     fi
 
 # Check whether the Dark Sky API is reachable
