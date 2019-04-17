@@ -145,7 +145,7 @@ if [ ! -z "$location" ]; then
 
 # Geocorrecate if -c parameter is not empty
 if [ ! -z "$gpx" ]; then
-    exiftool -overwrite_original -r -ext jpg -geotag "$gpx" -geosync=180 "$target"
+    exiftool -overwrite_original -r -geotag "$gpx" -geosync=180 "$target"
     fi
 
 # Check whether the Dark Sky API is reachable
