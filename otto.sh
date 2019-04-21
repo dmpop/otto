@@ -145,6 +145,11 @@ if [ ! -z "$location" ]; then
 
 # Geocorrecate if -c parameter is not empty
 if [ ! -z "$gpx" ]; then
+    echo
+    echo "--------------"
+    echo "Geotagging ..."
+    echo "--------------"
+    echo
     exiftool -overwrite_original -r -geotag "$gpx" -geosync=180 "$target"
     fi
 
