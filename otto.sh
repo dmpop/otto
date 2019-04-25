@@ -7,8 +7,8 @@
 # opkg install getopt bc jq curl perl-image-exiftool
 
 # Check whether the required packages are installed
-if [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ]; then
-    echo "Make sure that the following tools are installed on your system: getopt, bc, jq, curl, exiftool"
+if [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
+    echo "Make sure that the following tools are installed on your system: getopt, bc, jq, curl, exiftool, gpsbabel"
     exit 1
 fi
 
@@ -27,31 +27,33 @@ $0 [OPTIONS]
 $0 imports, geotags, adds metadata, and organizes photos and RAW files.
 
 Usage:
-  $0 -d <dir> -g <location>
+  $0 -d <dir> -g <location> -c <gpx file> -m <dir>
 
 Options:
-  -d --directory    Specifies the source directory
-  -g --geotag       Geotag using coordinates of the specified location (city)
-  -c --correlate    Geocorrelate using the specified GPX file
+  -d Specifies the source directory
+  -g Geotag using coordinates of the specified location (city)
+  -c Geocorrelate using the specified GPX file
+  -m Merge GPX files in the specified directory
 EOF
   exit 1
 }
 
-# Specify options
-OPTS=$(getopt -o d:g:c -l directory:geotag:correlate -- "$@")
-[[ $# -eq 0 ]] && usage
-eval set -- "$OPTS"
-
 # Obtain values
-while true; do
-  case "$1" in
-    -d | --directory ) src="$2"; shift 2;;
-    -g | --geotag ) location="$2"; shift 2;;
-    -c | --correlate) gpx="$3"; shift 2;;
-    -- ) shift; break ;;
-    * ) break ;;
+while getopts "d:g:c:m:" opt; do
+  case ${opt} in
+      d ) src=$OPTARG
+	  ;;
+      g ) location=$OPTARG
+	  ;;
+      c ) gpx=$OPTARG
+	  ;;
+      m ) gpxdir=$OPTARG
+	  ;;
+    \? ) usage
+      ;;
   esac
 done
+shift $((OPTIND -1))
 
 CONFIG_DIR=$(dirname "$0")
 CONFIG="${CONFIG_DIR}/otto.cfg"
@@ -141,7 +143,27 @@ if [ ! -z "$location" ]; then
             file=$(echo -e "$results" | sed -n "$line p")
             exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref "$file"
         done
+        fi
+
+# Merge GPX files if the -m parameter is given
+
+if [ ! -z "$gpxdir" ]; then
+    echo
+    echo "---------------------"
+    echo "Merging GPX files ..."
+    echo "---------------------"
+    echo
+    cd "$gpxdir"
+    ff=""
+    for f in *.gpx
+    do
+	ff="$ff -f $f"
+    done
+    gpsbabel -i gpx $ff -o gpx -F "output.gpx"
+    gpx=$(pwd)"/output.gpx"
     fi
+
+cd -
 
 # Geocorrecate if -c parameter is not empty
 if [ ! -z "$gpx" ]; then
