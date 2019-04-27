@@ -163,7 +163,7 @@ if [ ! -z "$gpxdir" ]; then
     gpx=$(pwd)"/output.gpx"
     fi
 
-cd -
+cd "$target"
 
 # Geocorrecate if -c parameter is not empty
 if [ ! -z "$gpx" ]; then
