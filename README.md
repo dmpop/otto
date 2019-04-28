@@ -12,14 +12,11 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 
 ## Usage
 
-    otto.sh -d <dir> -g <location>
+    otto.sh -d <dir> -g <location> -m <dir>
 
-- `-d` or `--directory` absolute path to the source directory
-- `-g` or `--geotag`    name of the city where the photos were taken (optional)
-
-## Limitations
-
-When using the script to geotag photos, Otto assumes that all transferred photos and RAW files are taken is one city.
+- `-d` absolute path to the source directory
+- `-g` name of the city where the photos were taken (optional)
+- `-m` path to the directory containing GPX files (optional)
 
 ## Problems?
 
