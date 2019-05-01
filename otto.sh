@@ -7,8 +7,8 @@
 # opkg install getopt bc jq curl perl-image-exiftool
 
 # Check whether the required packages are installed
-if [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
-    echo "Make sure that the following tools are installed on your system: getopt, bc, jq, curl, exiftool, gpsbabel"
+if [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ]; then
+    echo "Make sure that the following tools are installed on your system: getopt, bc, jq, curl, exiftool"
     exit 1
 fi
 
@@ -148,6 +148,11 @@ if [ ! -z "$location" ]; then
 # Merge GPX files if the -m parameter is given
 
 if [ ! -z "$gpxdir" ]; then
+    # Check whether the required packages are installed
+    if [ ! -x "$(command -v gpsbabel)" ]; then
+	echo "GPSBabel is not found."
+	exit 1
+    fi
     echo
     echo "---------------------"
     echo "Merging GPX files ..."
