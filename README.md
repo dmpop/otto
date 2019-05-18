@@ -8,14 +8,15 @@ For each JPEG photos, the script writes camera model, lens, and weather conditio
 
 The [Linux Photography](https://gumroad.com/l/linux-photography) book provides detailed instructions on installing and using Otto. Get your copy at [Google Play Store](https://play.google.com/store/books/details/Dmitri_Popov_Linux_Photography?id=cO70CwAAQBAJ) or [Gumroad](https://gumroad.com/l/linux-photography).
 
-<img src="https://scribblesandsnaps.files.wordpress.com/2016/07/linux-photography-6.jpg" width="200"/>
+<img src="https://i.imgur.com/wBgcfSk.jpg" title="Linux Photography book" width="200"/>
 
 ## Usage
 
-    otto.sh -d <dir> -g <location> -m <dir>
+    otto.sh -d <dir> -g <location> -c <file> -m <dir>
 
 - `-d` absolute path to the source directory
 - `-g` name of the city where the photos were taken (optional)
+- `-c` path to a GPX file
 - `-m` path to the directory containing GPX files (optional)
 
 ## Problems?
