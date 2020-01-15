@@ -27,27 +27,24 @@ $0 [OPTIONS]
 $0 imports, geotags, adds metadata, and organizes photos and RAW files.
 
 Usage:
-  $0 -d <dir> -g <location> -c <gpx file> -m <dir>
+  $0 -d <dir> -g <location> -c <dir>
 
 Options:
   -d Specifies the source directory
   -g Geotag using coordinates of the specified location (city)
-  -c Geocorrelate using the specified GPX file
-  -m Merge GPX files in the specified directory
+  -c path to a directory containing one or several GPX files (optional)
 EOF
   exit 1
 }
 
 # Obtain values
-while getopts "d:g:c:m:" opt; do
+while getopts "d:g:c:" opt; do
   case ${opt} in
       d ) src=$OPTARG
 	  ;;
       g ) location=$OPTARG
 	  ;;
       c ) gpx=$OPTARG
-	  ;;
-      m ) gpxdir=$OPTARG
 	  ;;
     \? ) usage
       ;;
@@ -145,20 +142,39 @@ if [ ! -z "$location" ]; then
         done
         fi
 
-# Merge GPX files if the -m parameter is given
+# Count GPX files in the specified directory
+cd "$gpx"
+fcount=$(ls -1 | wc -l)
 
-if [ ! -z "$gpxdir" ]; then
-    # Check whether the required packages are installed
-    if [ ! -x "$(command -v gpsbabel)" ]; then
-	echo "GPSBabel is not found."
-	exit 1
+# Check for GPX files and GPSBabel
+if [ "$fcount" -eq "0" ]; then
+    echo "No GPX files are found."
+    exit 1
+fi
+# Check whether the required packages are installed
+if [ ! -x "$(command -v gpsbabel)" ]; then
+    echo "GPSBabel is not found."
+    exit 1
+fi
+
+# Geocorrelate with a single GPX file
+if [ "$fcount" -eq "1" ]; then
+    echo
+    echo "--------------"
+    echo "Geotagging ..."
+    echo "--------------"
+    echo
+    fgpx=$(ls "$gpx")
+    exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 "$target"
     fi
+
+if [ "$fcount" -gt "1" ]; then
     echo
     echo "---------------------"
     echo "Merging GPX files ..."
     echo "---------------------"
     echo
-    cd "$gpxdir"
+    cd "$gpx"
     ff=""
     for f in *.gpx
     do
@@ -170,15 +186,6 @@ if [ ! -z "$gpxdir" ]; then
 
 cd "$target"
 
-# Geocorrecate if -c parameter is not empty
-if [ ! -z "$gpx" ]; then
-    echo
-    echo "--------------"
-    echo "Geotagging ..."
-    echo "--------------"
-    echo
-    exiftool -overwrite_original -r -geotag "$gpx" -geosync=180 "$target"
-    fi
 
 # Check whether the Dark Sky API is reachable
 check2=$(wget -q --spider https://api.darksky.net/)
@@ -189,7 +196,7 @@ check2=$(wget -q --spider https://api.darksky.net/)
         echo "-------------------------"
         echo
         # Obtain and write copyright camera model, lens, and weather conditions
-	results=$(find "$target" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
+    results=$(find "$target" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
     lines=$(echo -e "$results" | wc -l)
         for line in $(seq 1 $lines)
             do

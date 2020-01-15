@@ -12,12 +12,11 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 
 ## Usage
 
-    otto.sh -d <dir> -g <location> -c <file> -m <dir>
+    otto.sh -d <dir> -g <location> -c <dir>
 
 - `-d` absolute path to the source directory
 - `-g` name of the city where the photos were taken (optional)
-- `-c` path to a GPX file
-- `-m` path to the directory containing GPX files (optional)
+- `-c` path to a directory containing one or several GPX files (optional)
 
 ## Problems?
 
