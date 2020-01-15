@@ -190,6 +190,7 @@ check2=$(wget -q --spider https://api.darksky.net/)
         echo
         # Obtain and write copyright camera model, lens, and weather conditions
 	results=$(find "$target" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
+    lines=$(echo -e "$results" | wc -l)
         for line in $(seq 1 $lines)
             do
                 file=$(echo -e "$results" | sed -n "$line p")
