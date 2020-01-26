@@ -77,20 +77,20 @@ if [ ! -f "$CONFIG" ]; then
     read target
     echo "Specify copyright notice and press [ENTER]:"
     read copyright
-    echo 'target="'$target'"' >> "$CONFIG"
-    echo 'copyright="'$copyright'"' >> "$CONFIG"
-    echo 'json="weather.json"' >> "$CONFIG"
+    echo 'TARGET="'$target'"' >> "$CONFIG"
+    echo 'COPYRIGHT="'$copyright'"' >> "$CONFIG"
+    echo 'JSON="weather.json"' >> "$CONFIG"
     echo "Provide Dark Sky API key and press [ENTER]:"
     read api_key
-    echo 'api_key="'$api_key'"' >> "$CONFIG"
+    echo 'API_KEY="'$api_key'"' >> "$CONFIG"
     echo "Enter your Notify token and press [ENTER]."
     echo "Skip to disable notifications:"
     read notify_token
-    echo 'notify_token="'$notify_token'"' >> "$CONFIG"
+    echo 'NOTIFY_TOKEN="'$notify_token'"' >> "$CONFIG"
     fi
 
 source "$CONFIG"
-mkdir -p "$target"
+mkdir -p "$TARGET"
 
 echo
 echo "---------------------"
@@ -104,7 +104,7 @@ for line in $(seq 1 $lines)
         do
             file=$(echo -e "$results" | sed -n "$line p")
 	    echo "$file"
-            cp "$file" "$target"
+            cp "$file" "$TARGET"
             done
 
 cd "$target"
@@ -133,7 +133,7 @@ if [ ! -z "$location" ]; then
     echo "Geotagging ..."
     echo "--------------"
     echo
-    results=$(find "$target" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
+    results=$(find "$TARGET" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
     lines=$(echo -e "$results" | wc -l)
     for line in $(seq 1 $lines)
         do
@@ -165,7 +165,7 @@ if [ "$fcount" -eq "1" ]; then
     echo "--------------"
     echo
     fgpx=$(ls "$gpx")
-    exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 "$target"
+    exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 "$TARGET"
     fi
 
 if [ "$fcount" -gt "1" ]; then
@@ -184,7 +184,7 @@ if [ "$fcount" -gt "1" ]; then
     gpx=$(pwd)"/output.gpx"
     fi
 
-cd "$target"
+cd "$TARGET"
 
 
 # Check whether the Dark Sky API is reachable
@@ -196,7 +196,7 @@ check2=$(wget -q --spider https://api.darksky.net/)
         echo "-------------------------"
         echo
         # Obtain and write copyright camera model, lens, and weather conditions
-    results=$(find "$target" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
+    results=$(find "$TARGET" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
     lines=$(echo -e "$results" | wc -l)
         for line in $(seq 1 $lines)
             do
@@ -206,10 +206,10 @@ check2=$(wget -q --spider https://api.darksky.net/)
                 t=$(exiftool -d %Y-%m-%d -DateTimeOriginal "$file" | cut -d":" -f2 | tr -d " " | xargs -I dt date --date=dt +"%s")
                 camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
                 lens=$(exiftool -LensID "$file" | cut -d":" -f2)
-                curl -k "https://api.darksky.net/forecast/$api_key/$lat,$lon,$t?units=si&exclude=currently,hourly,flags" > "$json"
-                w_sum=$(jq '.daily | .data | .[0] | .summary' "$json" | tr -d '"')
-                w_temp=$(jq '.daily | .data | .[0] | .temperatureHigh' "$json" | tr -d '"')
-                exiftool -overwrite_original -copyright="$copyright" -comment="$camera, $lens, $w_temp°C, $w_sum" "$file"
+                curl -k "https://api.darksky.net/forecast/$API_KEY/$lat,$lon,$t?units=si&exclude=currently,hourly,flags" > "$JSON"
+                w_sum=$(jq '.daily | .data | .[0] | .summary' "$JSON" | tr -d '"')
+                w_temp=$(jq '.daily | .data | .[0] | .temperatureHigh' "$JSON" | tr -d '"')
+                exiftool -overwrite_original -copyright="$COPYRIGHT" -comment="$camera $lens $w_temp°C $w_sum" "$file"
                 done
         else
             echo
@@ -224,21 +224,19 @@ echo "--------------------------"
 echo "Renaming and organizing..."
 echo "--------------------------"
 echo
-exiftool -d %Y%m%d-%H%M%S%%-c.%%e '-FileName<DateTimeOriginal' "$target"
-exiftool '-Directory<CreateDate' -d ./%Y-%m-%d "$target"
+exiftool -d %Y%m%d-%H%M%S%%-c.%%e '-FileName<DateTimeOriginal' "$TARGET"
+exiftool '-Directory<CreateDate' -d ./%Y-%m-%d "$TARGET"
 
-if [ -f "$json" ]; then
-    rm "$json"
+if [ -f "$JSON" ]; then
+    rm "$JSON"
     fi
 
 cd
 
-find "$target" -type d -exec chmod 755 {} \;
+find "$TARGET" -type d -exec chmod 755 {} \;
 
-if [ ! -z "$notify_token" ]; then
-    curl -k \
-"https://us-central1-notify-b7652.cloudfunctions.net/sendNotification?to=${notify_token}&text=Otto%20is%20done!" \
-	> /dev/null
+if [ ! -z "$NOTIFY_TOKEN" ]; then
+    curl "https://api.simplepush.io/send/${NOTIFY_TOKEN}/Otto/All done!"
 else
     echo
     echo "---------"
