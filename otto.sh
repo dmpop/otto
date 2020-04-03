@@ -11,14 +11,12 @@ if [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(c
     echo "Make sure that the following tools are installed on your system: getopt, bc, jq, curl, exiftool"
     exit 1
 fi
-
 echo
 echo "-----------------------------------"
 echo "        Hello! I'm Otto."
 echo "Let's transfer and organize photos!"
 echo "-----------------------------------"
 echo
-
 # Usage prompt
 usage(){
 cat <<EOF
@@ -36,7 +34,6 @@ Options:
 EOF
   exit 1
 }
-
 # Obtain values
 while getopts "d:g:c:" opt; do
   case ${opt} in
@@ -51,26 +48,22 @@ while getopts "d:g:c:" opt; do
   esac
 done
 shift $((OPTIND -1))
-
 CONFIG_DIR=$(dirname "$0")
 CONFIG="${CONFIG_DIR}/otto.cfg"
-
 #Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     echo "Please specify the path to the source directory"
     exit 1
     fi
-
 # Check whether the Photon service is reachable
-check1=$(wget -q --spider http://photon.komoot.de/)
-if [ ! -z "$check1" ]; then
+check=$(wget -q --spider http://photon.komoot.de/)
+if [ ! -z "$check" ]; then
     echo
     echo "--------------------------------------------------------"
     echo "Photon is not reachable. Check your Internet connection."
     echo "--------------------------------------------------------"
     exit 1
     fi
-
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
     echo "Specify destination directory and press [ENTER]:"
@@ -79,36 +72,27 @@ if [ ! -f "$CONFIG" ]; then
     read copyright
     echo 'TARGET="'$target'"' >> "$CONFIG"
     echo 'COPYRIGHT="'$copyright'"' >> "$CONFIG"
-    echo 'JSON="weather.json"' >> "$CONFIG"
-    echo "Provide Dark Sky API key and press [ENTER]:"
-    read api_key
-    echo 'API_KEY="'$api_key'"' >> "$CONFIG"
     echo "Enter your Notify token and press [ENTER]."
     echo "Skip to disable notifications:"
     read notify_token
     echo 'NOTIFY_TOKEN="'$notify_token'"' >> "$CONFIG"
     fi
-
 source "$CONFIG"
 mkdir -p "$TARGET"
-
 echo
 echo "---------------------"
 echo "Transferring files..."
 echo "---------------------"
 echo
-
 results=$(find "$src" -name '*' -exec file {} \; | grep -o -P '^.+: \w+ image' | cut -d":" -f1)
 lines=$(echo -e "$results" | wc -l)
 for line in $(seq 1 $lines)
-        do
-            file=$(echo -e "$results" | sed -n "$line p")
-	    echo "$file"
-            cp "$file" "$TARGET"
-            done
-
-cd "$target"
-
+do
+    file=$(echo -e "$results" | sed -n "$line p")
+    echo "$file"
+    cp "$file" "$TARGET"
+done
+cd "$TARGET"
 if [ ! -z "$location" ]; then
     # Obtain latitude and longitude for the specified location
     lat=$(curl -k "photon.komoot.de/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
@@ -125,7 +109,6 @@ if [ ! -z "$location" ]; then
         lonref="W"
     fi
 fi
-
 # Geotag if the -g parameter is not empty
 if [ ! -z "$location" ]; then
     echo
@@ -141,84 +124,63 @@ if [ ! -z "$location" ]; then
             exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref "$file"
         done
         fi
-
-# Count GPX files in the specified directory
-cd "$gpx"
-fcount=$(ls -1 | wc -l)
-
-# Check for GPX files and GPSBabel
-if [ "$fcount" -eq "0" ]; then
-    echo "No GPX files are found."
-    exit 1
-fi
-# Check whether the required packages are installed
-if [ ! -x "$(command -v gpsbabel)" ]; then
-    echo "GPSBabel is not found."
-    exit 1
-fi
-
-# Geocorrelate with a single GPX file
-if [ "$fcount" -eq "1" ]; then
-    echo
-    echo "--------------"
-    echo "Geotagging ..."
-    echo "--------------"
-    echo
-    fgpx=$(ls "$gpx")
-    exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 "$TARGET"
-    fi
-
-if [ "$fcount" -gt "1" ]; then
-    echo
-    echo "---------------------"
-    echo "Merging GPX files ..."
-    echo "---------------------"
-    echo
+if [ ! -z "$gpx" ]; then
+    # Count GPX files in the specified directory
     cd "$gpx"
-    ff=""
-    for f in *.gpx
-    do
-	ff="$ff -f $f"
-    done
-    gpsbabel -i gpx $ff -o gpx -F "output.gpx"
-    gpx=$(pwd)"/output.gpx"
+    fcount=$(ls -1 | wc -l)
+    # Check for GPX files and GPSBabel
+    if [ "$fcount" -eq "0" ]; then
+	echo "No GPX files are found."
+	exit 1
     fi
-
+    # Check whether the required packages are installed
+    if [ ! -x "$(command -v gpsbabel)" ]; then
+	echo "GPSBabel is not found."
+	exit 1
+    fi
+    # Geocorrelate with a single GPX file
+    if [ "$fcount" -eq "1" ]; then
+	echo
+	echo "--------------"
+	echo "Geotagging ..."
+	echo "--------------"
+	echo
+	fgpx=$(ls "$gpx")
+	exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 "$TARGET"
+    fi
+    if [ "$fcount" -gt "1" ]; then
+	echo
+	echo "---------------------"
+	echo "Merging GPX files ..."
+	echo "---------------------"
+	echo
+	cd "$gpx"
+	ff=""
+	for f in *.gpx
+	do
+	    ff="$ff -f $f"
+	done
+	gpsbabel -i gpx $ff -o gpx -F "output.gpx"
+	gpx=$(pwd)"/output.gpx"
+    fi
+fi
 cd "$TARGET"
-
-
-# Check whether the Dark Sky API is reachable
-check2=$(wget -q --spider https://api.darksky.net/)
-    if [ -z "$check2" ]; then
-        echo
-        echo "-------------------------"
-        echo "Writing EXIF metadata ..."
-        echo "-------------------------"
-        echo
-        # Obtain and write copyright camera model, lens, and weather conditions
-    results=$(find "$TARGET" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
-    lines=$(echo -e "$results" | wc -l)
-        for line in $(seq 1 $lines)
-            do
-                file=$(echo -e "$results" | sed -n "$line p")
-                lat=$(exiftool -gpslatitude -n "$file" | cut -d":" -f2 | tr -d " ")
-                lon=$(exiftool -gpslongitude -n "$file" | cut -d":" -f2 | tr -d " ")
-                t=$(exiftool -d %Y-%m-%d -DateTimeOriginal "$file" | cut -d":" -f2 | tr -d " " | xargs -I dt date --date=dt +"%s")
-                camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
-                lens=$(exiftool -LensID "$file" | cut -d":" -f2)
-                curl -k "https://api.darksky.net/forecast/$API_KEY/$lat,$lon,$t?units=si&exclude=currently,hourly,flags" > "$JSON"
-                w_sum=$(jq '.daily | .data | .[0] | .summary' "$JSON" | tr -d '"')
-                w_temp=$(jq '.daily | .data | .[0] | .temperatureHigh' "$JSON" | tr -d '"')
-                exiftool -overwrite_original -copyright="$COPYRIGHT" -comment="$camera $lens $w_temp°C $w_sum" "$file"
-                done
-        else
-            echo
-            echo "-------------------------------------------------------------"
-            echo "Dark Sky API is not reachable. EXIF metadata was not updated."
-            echo "-------------------------------------------------------------"
-            echo
-        fi
-
+echo "-------------------------"
+echo "Writing EXIF metadata ..."
+echo "-------------------------"
+echo
+# Obtain and write copyright camera model, lens, and weather conditions
+results=$(find "$TARGET" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
+lines=$(echo -e "$results" | wc -l)
+for line in $(seq 1 $lines)
+do
+    file=$(echo -e "$results" | sed -n "$line p")
+    lat=$(exiftool -gpslatitude -n "$file" | cut -d":" -f2 | tr -d " ")
+    lon=$(exiftool -gpslongitude -n "$file" | cut -d":" -f2 | tr -d " ")
+    camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
+    lens=$(exiftool -LensID "$file" | cut -d":" -f2)
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens" "$file"
+done
 echo
 echo "--------------------------"
 echo "Renaming and organizing..."
@@ -226,15 +188,8 @@ echo "--------------------------"
 echo
 exiftool -d %Y%m%d-%H%M%S%%-c.%%e '-FileName<DateTimeOriginal' "$TARGET"
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d "$TARGET"
-
-if [ -f "$JSON" ]; then
-    rm "$JSON"
-    fi
-
 cd
-
-find "$TARGET" -type d -exec chmod 755 {} \;
-
+# find "$TARGET" -type d -exec chmod 755 {} \;
 if [ ! -z "$NOTIFY_TOKEN" ]; then
     curl "https://api.simplepush.io/send/${NOTIFY_TOKEN}/Otto/All done!"
 else
@@ -243,4 +198,4 @@ else
     echo "All done!"
     echo "---------"
     echo
-    fi
+fi
