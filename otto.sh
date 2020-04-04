@@ -175,8 +175,6 @@ lines=$(echo -e "$results" | wc -l)
 for line in $(seq 1 $lines)
 do
     file=$(echo -e "$results" | sed -n "$line p")
-    lat=$(exiftool -gpslatitude -n "$file" | cut -d":" -f2 | tr -d " ")
-    lon=$(exiftool -gpslongitude -n "$file" | cut -d":" -f2 | tr -d " ")
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
     exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens" "$file"
