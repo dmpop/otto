@@ -4,6 +4,7 @@
 # License: GPLv3 https://www.gnu.org/licenses/gpl-3.0.txt
 # Source code: https://gitlab.com/dmpop/otto
 
+# On a NAS running Entware, run the following command
 # opkg install getopt bc jq curl perl-image-exiftool
 
 # Check whether the required packages are installed
@@ -68,9 +69,9 @@ if [ ! -z "$check" ]; then
 if [ ! -f "$CONFIG" ]; then
     echo "Specify destination directory and press [ENTER]:"
     read target
+    echo 'TARGET="'$target'"' >> "$CONFIG"
     echo "Specify copyright notice and press [ENTER]:"
     read copyright
-    echo 'TARGET="'$target'"' >> "$CONFIG"
     echo 'COPYRIGHT="'$copyright'"' >> "$CONFIG"
     echo "Enter your Notify token and press [ENTER]."
     echo "Skip to disable notifications:"
@@ -161,7 +162,8 @@ if [ ! -z "$gpx" ]; then
 	    ff="$ff -f $f"
 	done
 	gpsbabel -i gpx $ff -o gpx -F "output.gpx"
-	gpx=$(pwd)"/output.gpx"
+	fgpx=$(pwd)"/output.gpx"
+	exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 "$TARGET"
     fi
 fi
 cd "$TARGET"
