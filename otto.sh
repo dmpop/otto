@@ -77,6 +77,16 @@ if [ ! -f "$CONFIG" ]; then
     echo "Skip to disable notifications:"
     read notify_token
     echo 'NOTIFY_TOKEN="'$notify_token'"' >> "$CONFIG"
+    echo "Enter FTP address and press [ENTER]:"
+    echo "Skip to disable FTP"
+    read ftp
+    echo 'FTP="'$ftp'"' >> "$CONFIG"
+    echo "Enter FTP user and press [ENTER]"
+    read user
+    echo 'USER="'$user'"' >> "$CONFIG"
+    echo "Enter FTP password and press [ENTER]"
+    read password
+    echo 'PASSWORD="'$password'"' >> "$CONFIG"
     fi
 source "$CONFIG"
 mkdir -p "$TARGET"
@@ -171,15 +181,25 @@ echo "-------------------------"
 echo "Writing EXIF metadata ..."
 echo "-------------------------"
 echo
-# Obtain and write copyright camera model, lens, and weather conditions
+# Obtain and write copyright camera model, lens, and weather info
 results=$(find "$TARGET" -name '*' -exec file {} \; | grep -o -P '^.+: JPEG' | cut -d":" -f1)
 lines=$(echo -e "$results" | wc -l)
 for line in $(seq 1 $lines)
 do
     file=$(echo -e "$results" | sed -n "$line p")
+    date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
+    wf=$date".txt"
+    if [ ! -z "$FTP" ]; then
+	curl -u $USER:$PASSWORD "$FTP$wf" -o "$HOME/$wf"
+	if [ -f "$HOME/$wf" ]; then
+	    weather=$(<"$HOME/$wf")
+	else
+	    weather="Weather not available"
+	fi
+    fi
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens" "$file"
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $weather" "$file"
 done
 echo
 echo "--------------------------"
