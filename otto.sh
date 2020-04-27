@@ -190,7 +190,9 @@ do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
     if [ ! -z "$FTP" ]; then
-	curl -u $USER:$PASSWORD "$FTP$wf" -o "$HOME/$wf"
+	if [ ! -f "$HOME/$wf" ]; then
+	    curl -u $USER:$PASSWORD "$FTP$wf" -o "$HOME/$wf"
+	fi
 	if [ -f "$HOME/$wf" ]; then
 	    weather=$(<"$HOME/$wf")
 	else
