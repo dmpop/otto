@@ -1,6 +1,6 @@
 # Otto
 
-Shell script for NAS appliances and Linux machines to import and organize photos and RAW files. The script transfers photos and RAW files from an external storage device to the specified directory on the NAS. The script can also geotag or geocorrelate the imported files.
+Shell script for Linux machines to import and organize photos and RAW files. The script transfers photos and RAW files from an external storage device to the specified directory on the NAS. The script can also geotag or geocorrelate the imported files.
 
 For each JPEG photos, the script writes camera model, lens, and weather conditions to the EXIF metadata. The script then renames the transferred files using the YYYYMMDD-HHMMSS format and groups them into folders by date.
 
