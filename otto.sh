@@ -152,7 +152,7 @@ done
 
 if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
-    check=$(wget -q --spider http://photon.komoot.de/)
+    check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
         echo
         echo "--------------------------------------------------------------"
@@ -161,13 +161,13 @@ if [ ! -z "$location" ]; then
         echo "--------------------------------------------------------------"
     else
         # Obtain latitude and longitude for the specified location
-        lat=$(curl -k "photon.komoot.de/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
+        lat=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
         if (($(echo "$lat > 0" | bc -l))); then
             latref="N"
         else
             latref="S"
         fi
-        lon=$(curl -k "photon.komoot.de/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[0]')
+        lon=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[0]')
         if (($(echo "$lon > 0" | bc -l))); then
             lonref="E"
         else
