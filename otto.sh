@@ -147,6 +147,9 @@ for file in *.*; do
     fi
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
+    if [ -z "$lens" ]; then
+        lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
+    fi
     exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $weather" "$file"
 done
 
@@ -227,7 +230,7 @@ exiftool '-Directory<CreateDate' -d ./%Y-%m-%d -r .
 cd
 # find "$TARGET" -type d -exec chmod 755 {} \;
 if [ ! -z "$NOTIFY_TOKEN" ]; then
-    curl "https://api.simplepush.io/send/${NOTIFY_TOKEN}/Otto/All done!"
+    curl --data "key=${NOTIFY_TOKEN}&title=Otto&msg=All done!&event=otto" https://api.simplepush.io/send
 else
     echo
     echo "---------------"
