@@ -75,24 +75,25 @@ CONFIG="$HOME/.otto.cfg"
 if [ ! -f "$CONFIG" ]; then
     echo "Specify destination directory and press [ENTER]:"
     read target
-    echo 'TARGET="'$target'"' >>"$CONFIG"
+    echo "TARGET='$target'" >>"$CONFIG"
     echo "Specify copyright notice and press [ENTER]:"
     read copyright
-    echo 'COPYRIGHT="'$copyright'"' >>"$CONFIG"
+    echo "COPYRIGHT='$copyright'" >>"$CONFIG"
     echo "Enter your Notify token and press [ENTER]."
     echo "Skip to disable notifications:"
     read notify_token
-    echo 'NOTIFY_TOKEN="'$notify_token'"' >>"$CONFIG"
+    echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
     echo "Enter FTP address and press [ENTER]:"
     echo "Skip to disable FTP"
     read ftp
-    echo 'FTP="'$ftp'"' >>"$CONFIG"
+    echo "FTP='$ftp'" >>"$CONFIG"
     echo "Enter FTP user and press [ENTER]"
     read user
-    echo 'USER="'$user'"' >>"$CONFIG"
+    echo "USER='$user'" >>"$CONFIG"
     echo "Enter FTP password and press [ENTER]"
     read password
-    echo 'PASSWORD="'$password'"' >>"$CONFIG"
+    echo "PASSWORD='$password'" >>"$CONFIG"
+    echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
 fi
 
 source "$CONFIG"
@@ -125,7 +126,7 @@ echo "   Renaming files ...   "
 echo "------------------------"
 echo
 
-exiftool -d %Y%m%d-%H%M%S%%-c.%%e '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
+exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
 
 echo "-------------------------------"
 echo "   Writing EXIF metadata ...   "
