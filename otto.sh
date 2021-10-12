@@ -19,8 +19,8 @@
 # Source code: https://gitlab.com/dmpop/otto
 
 # Check whether the required packages are installed
-if [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
-    echo "Make sure that the following tools are installed on your system: getopt, bc, jq, curl, exiftool, rsync, gpsbabel"
+if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
+    echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, rsync, gpsbabel"
     exit 1
 fi
 
@@ -46,7 +46,7 @@ EOF
 
 notify() {
     if [ -x "$(command -v notify-send)" ]; then
-    notify-send "$1"
+        notify-send "$1"
     fi
 }
 
@@ -82,25 +82,29 @@ CONFIG="$HOME/.otto.cfg"
 
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
-    echo "Specify destination directory and press [ENTER]:"
-    read target
+    dialog --title "Otto configuration" \
+        --form "\n          Specify the required settings" 16 56 6 \
+        "Target directory:" 1 4 "" 1 23 25 30 \
+        "Copyright notice:" 2 4 "" 2 23 25 30 \
+        "    Notify token:" 3 4 "" 3 23 25 30 \
+        "      FTP server:" 4 4 "" 4 23 25 30 \
+        "        FTP user:" 5 4 "" 5 23 25 30 \
+        "    FTP password:" 6 4 "" 6 23 25 30 \
+        >/tmp/dialog.tmp \
+        2>&1 >/dev/tty
+    target=$(sed -n 1p /tmp/dialog.tmp)
+    copyright=$(sed -n 2p /tmp/dialog.tmp)
+    notify_token=$(sed -n 3p /tmp/dialog.tmp)
+    ftp=$(sed -n 4p /tmp/dialog.tmp)
+    user=$(sed -n 5p /tmp/dialog.tmp)
+    password=$(sed -n 6p /tmp/dialog.tmp)
+    rm -f /tmp/dialog.tmp
+
     echo "TARGET='$target'" >>"$CONFIG"
-    echo "Specify copyright notice and press [ENTER]:"
-    read copyright
     echo "COPYRIGHT='$copyright'" >>"$CONFIG"
-    echo "Enter your Notify token and press [ENTER]."
-    echo "Skip to disable notifications:"
-    read notify_token
     echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
-    echo "Enter FTP address and press [ENTER]:"
-    echo "Skip to disable FTP"
-    read ftp
     echo "FTP='$ftp'" >>"$CONFIG"
-    echo "Enter FTP user and press [ENTER]"
-    read user
     echo "USER='$user'" >>"$CONFIG"
-    echo "Enter FTP password and press [ENTER]"
-    read password
     echo "PASSWORD='$password'" >>"$CONFIG"
     echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
 fi

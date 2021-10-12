@@ -10,7 +10,7 @@ Otto is a shell script for importing and organizing RAW and JPEG files. The scri
 
 # Dependencies
 
-Otto requires the following tools: `getopt`, `bc`, `jq`, `cURL`, `ExifTool`, `Rsync`, `GPSbabel`
+Otto requires the following tools: `dialog`, `getopt`, `bc`, `jq`, `cURL`, `ExifTool`, `Rsync`, `GPSbabel`
 
 # Installation and usage
 
