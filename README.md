@@ -3,14 +3,14 @@
 Otto is a shell script for importing and organizing RAW and JPEG files. The script performs the following tasks:
 
 - transfer RAW and JPEG files from an external USB device (for example, USB card reader)
-- rename the transferred files using the _YYYYMMDD-HHMMSS_ format
+- rename the transferred files using the _YYYYMMDD-HHMMSS_ format (can be customized)
 - write camera model, lens, and weather conditions to the EXIF metadata
-- geotag or geocorrelate the transferred files.
-- group the processed files into folders by date.
+- geotag or geocorrelate the transferred files
+- group the processed files into folders by date
 
 # Dependencies
 
-Otto requires the following tools: getopt, bc, jq, cURL, ExifTool, Rsync, GPSbabel
+Otto requires the following tools: `getopt`, `bc`, `jq`, `cURL`, `ExifTool`, `Rsync`, `GPSbabel`
 
 # Installation and usage
 
