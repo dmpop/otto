@@ -44,12 +44,21 @@ EOF
     exit 1
 }
 
+notify() {
+    if [ -x "$(command -v notify-send)" ]; then
+    notify-send "$1"
+    fi
+}
+
 echo
-echo "-----------------------------------------"
-echo "          Hello! I'm Otto.   "
-echo "   Let's transfer and organize photos!   "
-echo "-----------------------------------------"
+echo "   ____  __  __       "
+echo "  / __ \/ /_/ /_____  "
+echo " / / / / __/ __/ __ \ "
+echo "/ /_/ / /_/ /_/ /_/ / "
+echo "\____/\__/\__/\____/  "
+echo "----------------------"
 echo
+notify " Hello! I'm Otto. I here to help you to transfer and organize photos :-)"
 
 # Obtain values
 while getopts "d:g:c:" opt; do
@@ -117,6 +126,8 @@ echo "   Transferring files ...   "
 echo "----------------------------"
 echo
 
+notify-send "I'm transferring files now"
+
 rsync -avh --delete "$src" "$TARGET"
 
 cd "$TARGET"
@@ -126,12 +137,17 @@ echo "   Renaming files ...   "
 echo "------------------------"
 echo
 
+notify-send "And now I'm renaming files"
+
 exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
 
 echo "-------------------------------"
 echo "   Writing EXIF metadata ...   "
 echo "-------------------------------"
 echo
+
+notify-send "Time to write EXIF metadata"
+
 # Obtain and write copyright camera model, lens, and weather info
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
@@ -163,6 +179,9 @@ if [ ! -z "$location" ]; then
         echo "   Photon is not reachable. Check your Internet connection.   "
         echo "                  Geotagging skipped.                         "
         echo "--------------------------------------------------------------"
+
+        notify "Photon is not reachable. Geotagging skipped. :-("
+
     else
         # Obtain latitude and longitude for the specified location
         lat=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
@@ -182,6 +201,9 @@ if [ ! -z "$location" ]; then
         echo "   Geotagging ...   "
         echo "--------------------"
         echo
+
+        notify "Geotagging in progress."
+
         exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref -r .
     fi
 fi
@@ -202,6 +224,9 @@ if [ ! -z "$gpx" ]; then
         echo "   Geotagging ...   "
         echo "--------------------"
         echo
+
+        notify "Geotagging in progress."
+
         fgpx=$(ls "$gpx")
         exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 -r .
     fi
@@ -211,6 +236,9 @@ if [ ! -z "$gpx" ]; then
         echo "   Merging GPX files ...   "
         echo "---------------------------"
         echo
+
+        notify "I need to merge GPX files."
+
         cd "$gpx"
         ff=""
         for f in *.gpx; do
@@ -227,6 +255,9 @@ echo "--------------------------"
 echo "   Organizing files ...   "
 echo "--------------------------"
 echo
+
+notify "Finally, let's organize files."
+
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d -r .
 cd
 # find "$TARGET" -type d -exec chmod 755 {} \;
@@ -238,4 +269,5 @@ else
     echo "   All done!   "
     echo "---------------"
     echo
+    notify "All done! Have a nice day."
 fi
