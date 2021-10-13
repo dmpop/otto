@@ -84,12 +84,12 @@ CONFIG="$HOME/.otto.cfg"
 if [ ! -f "$CONFIG" ]; then
     dialog --title "Otto configuration" \
         --form "\n          Specify the required settings" 16 56 6 \
-        "Target directory:" 1 4 "" 1 23 25 30 \
-        "Copyright notice:" 2 4 "" 2 23 25 30 \
-        "    Notify token:" 3 4 "" 3 23 25 30 \
-        "      FTP server:" 4 4 "" 4 23 25 30 \
-        "        FTP user:" 5 4 "" 5 23 25 30 \
-        "    FTP password:" 6 4 "" 6 23 25 30 \
+        "Target directory:" 1 4 "" 1 23 25 512 \
+        "Copyright notice:" 2 4 "" 2 23 25 512 \
+        "    Notify token:" 3 4 "" 3 23 25 512 \
+        "      FTP server:" 4 4 "" 4 23 25 512 \
+        "        FTP user:" 5 4 "" 5 23 25 512 \
+        "    FTP password:" 6 4 "" 6 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     target=$(sed -n 1p /tmp/dialog.tmp)
@@ -158,7 +158,7 @@ for file in *.*; do
     wf=$date".txt"
     if [ ! -z "$FTP" ]; then
         if [ ! -f "$HOME/$wf" ]; then
-            curl -u $USER:$PASSWORD "$FTP$wf" -o "$HOME/$wf"
+            curl -s -u "$USER":"$PASSWORD" "$FTP$wf" -o "$HOME/$wf"
         fi
         if [ -f "$HOME/$wf" ]; then
             weather=$(<"$HOME/$wf")
