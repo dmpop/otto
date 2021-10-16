@@ -58,7 +58,7 @@ echo "/ /_/ / /_/ /_/ /_/ / "
 echo "\____/\__/\__/\____/  "
 echo "----------------------"
 echo
-notify " Hello! I'm Otto. I here to help you to transfer and organize photos :-)"
+notify " Hello! I'm Otto. Let's transfer and organize photos :-)"
 
 # Obtain values
 while getopts "d:g:c:" opt; do
@@ -92,21 +92,24 @@ if [ ! -f "$CONFIG" ]; then
         "    FTP password:" 6 4 "" 6 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
-    target=$(sed -n 1p /tmp/dialog.tmp)
-    copyright=$(sed -n 2p /tmp/dialog.tmp)
-    notify_token=$(sed -n 3p /tmp/dialog.tmp)
-    ftp=$(sed -n 4p /tmp/dialog.tmp)
-    user=$(sed -n 5p /tmp/dialog.tmp)
-    password=$(sed -n 6p /tmp/dialog.tmp)
-    rm -f /tmp/dialog.tmp
-
-    echo "TARGET='$target'" >>"$CONFIG"
-    echo "COPYRIGHT='$copyright'" >>"$CONFIG"
-    echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
-    echo "FTP='$ftp'" >>"$CONFIG"
-    echo "USER='$user'" >>"$CONFIG"
-    echo "PASSWORD='$password'" >>"$CONFIG"
-    echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
+    if [ -s "/tmp/dialog.tmp" ]; then
+        target=$(sed -n 1p /tmp/dialog.tmp)
+        copyright=$(sed -n 2p /tmp/dialog.tmp)
+        notify_token=$(sed -n 3p /tmp/dialog.tmp)
+        ftp=$(sed -n 4p /tmp/dialog.tmp)
+        user=$(sed -n 5p /tmp/dialog.tmp)
+        password=$(sed -n 6p /tmp/dialog.tmp)
+        echo "TARGET='$target'" >>"$CONFIG"
+        echo "COPYRIGHT='$copyright'" >>"$CONFIG"
+        echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
+        echo "FTP='$ftp'" >>"$CONFIG"
+        echo "USER='$user'" >>"$CONFIG"
+        echo "PASSWORD='$password'" >>"$CONFIG"
+        echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
+        rm -f /tmp/dialog.tmp
+    else
+        exit 1
+    fi
 fi
 
 source "$CONFIG"
@@ -126,31 +129,31 @@ mkdir -p "$TARGET"
 
 echo
 echo "----------------------------"
-echo "   Transferring files ...   "
+echo "     Transferring files     "
 echo "----------------------------"
 echo
 
-notify-send "I'm transferring files now"
+notify-send "Transferring files"
 
 rsync -avh --delete "$src" "$TARGET"
 
 cd "$TARGET"
 
 echo "------------------------"
-echo "   Renaming files ...   "
+echo "     Renaming files     "
 echo "------------------------"
 echo
 
-notify-send "And now I'm renaming files"
+notify-send "Renaming files"
 
 exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
 
 echo "-------------------------------"
-echo "   Writing EXIF metadata ...   "
+echo "     Writing EXIF metadata     "
 echo "-------------------------------"
 echo
 
-notify-send "Time to write EXIF metadata"
+notify-send "Writing EXIF metadata"
 
 # Obtain and write copyright camera model, lens, and weather info
 for file in *.*; do
@@ -202,11 +205,11 @@ if [ ! -z "$location" ]; then
         fi
         echo
         echo "--------------------"
-        echo "   Geotagging ...   "
+        echo "     Geotagging     "
         echo "--------------------"
         echo
 
-        notify "Geotagging in progress."
+        notify "Geotagging"
 
         exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref -r .
     fi
@@ -225,11 +228,11 @@ if [ ! -z "$gpx" ]; then
     if [ "$fcount" -eq "1" ]; then
         echo
         echo "--------------------"
-        echo "   Geotagging ...   "
+        echo "     Geotagging     "
         echo "--------------------"
         echo
 
-        notify "Geotagging in progress."
+        notify "Geotagging"
 
         fgpx=$(ls "$gpx")
         exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 -r .
@@ -237,11 +240,11 @@ if [ ! -z "$gpx" ]; then
     if [ "$fcount" -gt "1" ]; then
         echo
         echo "---------------------------"
-        echo "   Merging GPX files ...   "
+        echo "     Merging GPX files     "
         echo "---------------------------"
         echo
 
-        notify "I need to merge GPX files."
+        notify "Merging GPX files"
 
         cd "$gpx"
         ff=""
@@ -256,11 +259,11 @@ fi
 
 echo
 echo "--------------------------"
-echo "   Organizing files ...   "
+echo "     Organizing files     "
 echo "--------------------------"
 echo
 
-notify "Finally, let's organize files."
+notify "Organizing files"
 
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d -r .
 cd
