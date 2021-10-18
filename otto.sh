@@ -46,7 +46,7 @@ EOF
 
 notify() {
     if [ -x "$(command -v notify-send)" ]; then
-        notify-send "$1"
+        notify-send "$1" -t 1
     fi
 }
 
