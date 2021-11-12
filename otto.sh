@@ -19,7 +19,7 @@
 # Source code: https://gitlab.com/dmpop/otto
 
 # Check whether the required packages are installed
-if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
+if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
     echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, rsync, gpsbabel"
     exit 1
 fi
@@ -87,22 +87,22 @@ if [ ! -f "$CONFIG" ]; then
         "Target directory:" 1 4 "" 1 23 25 512 \
         "Copyright notice:" 2 4 "" 2 23 25 512 \
         "    Notify token:" 3 4 "" 3 23 25 512 \
-        "      FTP server:" 4 4 "" 4 23 25 512 \
-        "        FTP user:" 5 4 "" 5 23 25 512 \
-        "    FTP password:" 6 4 "" 6 23 25 512 \
+        "          Server:" 4 4 "" 4 23 25 512 \
+        "            User:" 5 4 "" 5 23 25 512 \
+        "        Password:" 6 4 "" 6 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
         target=$(sed -n 1p /tmp/dialog.tmp)
         copyright=$(sed -n 2p /tmp/dialog.tmp)
         notify_token=$(sed -n 3p /tmp/dialog.tmp)
-        ftp=$(sed -n 4p /tmp/dialog.tmp)
+        server=$(sed -n 4p /tmp/dialog.tmp)
         user=$(sed -n 5p /tmp/dialog.tmp)
         password=$(sed -n 6p /tmp/dialog.tmp)
         echo "TARGET='$target'" >>"$CONFIG"
         echo "COPYRIGHT='$copyright'" >>"$CONFIG"
         echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
-        echo "FTP='$ftp'" >>"$CONFIG"
+        echo "SERVER='$server'" >>"$CONFIG"
         echo "USER='$user'" >>"$CONFIG"
         echo "PASSWORD='$password'" >>"$CONFIG"
         echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
@@ -159,9 +159,9 @@ notify-send "Writing EXIF metadata"
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
-    if [ ! -z "$FTP" ]; then
+    if [ ! -z "$SERVER" ]; then
         if [ ! -f "$HOME/$wf" ]; then
-            curl -s -u "$USER":"$PASSWORD" "$FTP$wf" -o "$HOME/$wf"
+        sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$SERVER/$wf" "$HOME"
         fi
         if [ -f "$HOME/$wf" ]; then
             weather=$(<"$HOME/$wf")
