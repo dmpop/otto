@@ -1,5 +1,14 @@
 # Otto
 
+```
+       ~
+    o{°_°}o
+     /(.)~[*O]
+      / \
+================
+Hello! I'm Otto.
+```
+
 Otto is a shell script for importing and organizing RAW and JPEG files. The script performs the following tasks:
 
 - transfer RAW and JPEG files from an external USB device (for example, USB card reader)

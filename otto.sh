@@ -50,15 +50,14 @@ notify() {
     fi
 }
 
-echo
-echo "   ____  __  __       "
-echo "  / __ \/ /_/ /_____  "
-echo " / / / / __/ __/ __ \ "
-echo "/ /_/ / /_/ /_/ /_/ / "
-echo "\____/\__/\__/\____/  "
-echo "----------------------"
-echo
-notify " Hello! I'm Otto. Let's transfer and organize photos :-)"
+echo ''
+echo '               ~'
+echo '            o{°_°}o'
+echo '             /(.)~[*O]'
+echo '              / \'
+echo '         ================'
+echo "         Hello! I'm Otto."
+echo ''
 
 # Obtain values
 while getopts "d:g:c:" opt; do
@@ -136,7 +135,7 @@ echo "     Transferring files     "
 echo "----------------------------"
 echo
 
-notify-send "Transferring files"
+notify "Transferring files"
 
 rsync -avh --delete "$src" "$TARGET"
 
@@ -147,7 +146,7 @@ echo "     Renaming files     "
 echo "------------------------"
 echo
 
-notify-send "Renaming files"
+notify "Renaming files"
 
 exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
 
@@ -156,7 +155,7 @@ echo "     Writing EXIF metadata     "
 echo "-------------------------------"
 echo
 
-notify-send "Writing EXIF metadata"
+notify "Writing EXIF metadata"
 
 # Obtain and write copyright camera model, lens, and weather info
 for file in *.*; do
