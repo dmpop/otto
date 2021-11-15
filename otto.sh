@@ -83,13 +83,14 @@ CONFIG="$HOME/.otto.cfg"
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
     dialog --title "Otto configuration" \
-        --form "\n          Specify the required settings" 16 56 6 \
+        --form "\n          Specify the required settings" 16 56 7 \
         "Target directory:" 1 4 "" 1 23 25 512 \
         "Copyright notice:" 2 4 "" 2 23 25 512 \
         "    Notify token:" 3 4 "" 3 23 25 512 \
         "          Server:" 4 4 "" 4 23 25 512 \
-        "            User:" 5 4 "" 5 23 25 512 \
-        "        Password:" 6 4 "" 6 23 25 512 \
+        "            Path:" 5 4 "" 5 23 25 512 \
+        "            User:" 6 4 "" 6 23 25 512 \
+        "        Password:" 7 4 "" 7 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
@@ -97,12 +98,14 @@ if [ ! -f "$CONFIG" ]; then
         copyright=$(sed -n 2p /tmp/dialog.tmp)
         notify_token=$(sed -n 3p /tmp/dialog.tmp)
         server=$(sed -n 4p /tmp/dialog.tmp)
-        user=$(sed -n 5p /tmp/dialog.tmp)
-        password=$(sed -n 6p /tmp/dialog.tmp)
+        path=$(sed -n 5p /tmp/dialog.tmp)
+        user=$(sed -n 6p /tmp/dialog.tmp)
+        password=$(sed -n 7p /tmp/dialog.tmp)
         echo "TARGET='$target'" >>"$CONFIG"
         echo "COPYRIGHT='$copyright'" >>"$CONFIG"
         echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
         echo "SERVER='$server'" >>"$CONFIG"
+        echo "PATH='$path'" >>"$CONFIG"
         echo "USER='$user'" >>"$CONFIG"
         echo "PASSWORD='$password'" >>"$CONFIG"
         echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
@@ -161,7 +164,7 @@ for file in *.*; do
     wf=$date".txt"
     if [ ! -z "$SERVER" ]; then
         if [ ! -f "$HOME/$wf" ]; then
-        sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$SERVER/$wf" "$HOME"
+            sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$SERVER:$PATH/$wf" "$HOME"
         fi
         if [ -f "$HOME/$wf" ]; then
             weather=$(<"$HOME/$wf")
