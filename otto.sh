@@ -83,13 +83,13 @@ CONFIG="$HOME/.otto.cfg"
 if [ ! -f "$CONFIG" ]; then
     dialog --title "Otto configuration" \
         --form "\n          Specify the required settings" 16 56 7 \
-        "Target directory:" 1 4 "" 1 23 25 512 \
-        "Copyright notice:" 2 4 "" 2 23 25 512 \
-        "    Notify token:" 3 4 "" 3 23 25 512 \
-        "    Remote server:" 4 4 "" 4 23 25 512 \
-        "      Remote path:" 5 4 "" 5 23 25 512 \
-        "            User:" 6 4 "" 6 23 25 512 \
-        "        Password:" 7 4 "" 7 23 25 512 \
+        "Target directory:" 1 4 "/home/user/OTTO" 1 23 25 512 \
+        "Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
+        "    Notify token:" 3 4 "Simplepush token" 3 23 25 512 \
+        "    Remote server:" 4 4 "hello.xyz" 4 23 25 512 \
+        "      Remote path:" 5 4 "/var/www/html/data" 5 23 25 512 \
+        "            User:" 6 4 "Remote username" 6 23 25 512 \
+        "        Password:" 7 4 "Remote user password" 7 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
