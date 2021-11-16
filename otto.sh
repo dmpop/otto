@@ -20,7 +20,7 @@
 
 # Check whether the required packages are installed
 if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
-    echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, rsync, gpsbabel"
+    echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, sshpass, rsync, gpsbabel"
     exit 1
 fi
 
@@ -86,8 +86,8 @@ if [ ! -f "$CONFIG" ]; then
         "Target directory:" 1 4 "" 1 23 25 512 \
         "Copyright notice:" 2 4 "" 2 23 25 512 \
         "    Notify token:" 3 4 "" 3 23 25 512 \
-        "          Server:" 4 4 "" 4 23 25 512 \
-        "            Path:" 5 4 "" 5 23 25 512 \
+        "    Remote server:" 4 4 "" 4 23 25 512 \
+        "      Remote path:" 5 4 "" 5 23 25 512 \
         "            User:" 6 4 "" 6 23 25 512 \
         "        Password:" 7 4 "" 7 23 25 512 \
         >/tmp/dialog.tmp \
@@ -103,8 +103,8 @@ if [ ! -f "$CONFIG" ]; then
         echo "TARGET='$target'" >>"$CONFIG"
         echo "COPYRIGHT='$copyright'" >>"$CONFIG"
         echo "NOTIFY_TOKEN='$notify_token'" >>"$CONFIG"
-        echo "SERVER='$server'" >>"$CONFIG"
-        echo "PATH='$path'" >>"$CONFIG"
+        echo "REMOTE_SERVER='$server'" >>"$CONFIG"
+        echo "REMOTE_PATH='$path'" >>"$CONFIG"
         echo "USER='$user'" >>"$CONFIG"
         echo "PASSWORD='$password'" >>"$CONFIG"
         echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
@@ -161,9 +161,9 @@ notify "Writing EXIF metadata"
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
-    if [ ! -z "$SERVER" ]; then
+    if [ ! -z "$REMOTE_SERVER" ]; then
         if [ ! -f "$HOME/$wf" ]; then
-            sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$SERVER:$PATH/$wf" "$HOME"
+            sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME"
         fi
         if [ -f "$HOME/$wf" ]; then
             weather=$(<"$HOME/$wf")
