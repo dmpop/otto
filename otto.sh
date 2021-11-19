@@ -157,7 +157,7 @@ echo
 
 notify "Writing EXIF metadata"
 
-# Obtain and write copyright camera model, lens, and weather info
+# Obtain and write copyright camera model, lens, and notes
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
@@ -166,9 +166,9 @@ for file in *.*; do
             sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME"
         fi
         if [ -f "$HOME/$wf" ]; then
-            weather=$(<"$HOME/$wf")
+            notes=$(<"$HOME/$wf")
         else
-            weather="Weather not available"
+            notes=""
         fi
     fi
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
@@ -176,7 +176,7 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $weather" "$file"
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" "$file"
 done
 
 if [ ! -z "$location" ]; then
@@ -230,11 +230,11 @@ if [ ! -z "$gpx" ]; then
     if [ "$fcount" -eq "1" ]; then
         echo
         echo "--------------------"
-        echo "     Geotagging     "
+        echo "   Geocorrelating   "
         echo "--------------------"
         echo
 
-        notify "Geotagging"
+        notify "Geocorrelating"
 
         fgpx=$(ls "$gpx")
         exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 -r .
