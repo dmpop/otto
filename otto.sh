@@ -29,17 +29,18 @@ usage() {
     cat <<EOF
 $0 [OPTIONS]
 ------
-$0 imports, geotags, adds metadata, and organizes photos and RAW files.
+$0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir>
+  $0 -d <dir> -g <location> -c <dir> -b <dir>
 
 OPTIONS:
 --------
   -d Specifies the source directory
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files (optional)
+  -b Perform backup only
 EOF
     exit 1
 }
@@ -59,8 +60,8 @@ echo '         ================'
 echo "         Hello! I'm Otto."
 echo ''
 
-# Obtain values
-while getopts "d:g:c:" opt; do
+# Obtain parameter values
+while getopts "d:g:c:b:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -70,6 +71,9 @@ while getopts "d:g:c:" opt; do
         ;;
     c)
         gpx=$OPTARG
+        ;;
+    b)
+        bak_dir=$OPTARG
         ;;
     \?)
         usage
@@ -124,6 +128,30 @@ fi
 
 if [ -z "$src" ]; then
     usage
+    exit 1
+fi
+
+
+# If -b parameter specified,
+# perform a simple backup
+if [ -z "$back_dir" ]; then
+    echo
+    echo "----------------------------"
+    echo "     Transferring files     "
+    echo "----------------------------"
+    echo
+    notify "Transferring files"
+
+    rsync -avh --delete "$src" "$bak_dir"
+
+    echo
+    echo "----------------"
+    echo "   All done.    "
+    echo "Have a nice day!"
+    echo "----------------"
+    echo
+    notify "All done. Have a nice day!"
+
     exit 1
 fi
 
@@ -274,9 +302,10 @@ if [ ! -z "$NOTIFY_TOKEN" ]; then
     curl --data "key=${NOTIFY_TOKEN}&title=Otto&msg=All done!&event=otto" https://api.simplepush.io/send
 else
     echo
-    echo "---------------"
-    echo "   All done!   "
-    echo "---------------"
+    echo "----------------"
+    echo "   All done.    "
+    echo "Have a nice day!"
+    echo "----------------"
     echo
-    notify "All done! Have a nice day."
+    notify "All done. Have a nice day!"
 fi
