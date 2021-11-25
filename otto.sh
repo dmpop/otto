@@ -16,7 +16,7 @@
 #  MA 02110-1301, USA.
 
 # Author: Dmitri Popov, dmpop@linux.com
-# Source code: https://gitlab.com/dmpop/otto
+# Source code: https://github.com/dmpop/otto
 
 # Check whether the required packages are installed
 if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
