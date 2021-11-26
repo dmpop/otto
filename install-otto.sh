@@ -24,12 +24,30 @@ if [ -x "$(command -v apt)" ]; then
 fi
 
 if [[ $EUID -eq 0 ]]; then
-   echo "Run the script as a regular user"
-   exit 1
+        echo "Run the script as a regular user"
+        exit 1
 fi
 
-sudo apt install git getopt bc jq curl perl-image-exiftool git gpsbabel
+cd
+
+if [ ! -d "$HOME/bin" ]; then
+        mkdir $HOME/bin
+        echo 'export PATH='$HOME'/bin:$PATH' >>.bashrc
+fi
+
+sudo mkdir -p /etc/systemd/system/systemd-udevd.service.d
+sudo sh -c "echo '[Service]' > /etc/systemd/system/systemd-udevd.service.d/00-privatemounts-no.conf"
+sudo sh -c "echo 'PrivateMounts=no' >> /etc/systemd/system/systemd-udevd.service.d/00-privatemounts-no.conf"
+sudo systemctl daemon-reexec
+sudo service systemd-udevd restart
+
+sudo apt update
+sudo apt upgrade
+sudo apt install git bc jq curl exiftool git gpsbabel screen usbmount
 git clone https://github.com/dmpop/otto.git
 cd otto
 cp otto.sh $HOME/bin/otto
 chmod +x $HOME/bin/otto
+cd
+echo "All done. The system will reboot now."
+sudo reboot
