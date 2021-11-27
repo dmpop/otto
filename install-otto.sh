@@ -43,7 +43,7 @@ sudo service systemd-udevd restart
 
 sudo apt update
 sudo apt upgrade
-sudo apt install git bc jq curl exiftool git gpsbabel screen usbmount
+sudo apt install git bc jq curl exiftool git gpsbabel screen usbmount libimobiledevice6 ifuse mtp-tools jmtpfs
 git clone https://github.com/dmpop/otto.git
 cd otto
 cp otto.sh $HOME/bin/otto

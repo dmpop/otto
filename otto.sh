@@ -56,7 +56,7 @@ echo '               ~'
 echo '            o{°_°}o'
 echo '             /(.)~[*O]'
 echo '              / \'
-echo '         ================'
+echo '         ---------------='
 echo "         Hello! I'm Otto."
 echo ''
 
@@ -122,69 +122,64 @@ source "$CONFIG"
 
 # If Simplepush token is provided, push the IP address
 if [ ! -z "$NOTIFY_TOKEN" ]; then
-ip=$(hostname -I)
+    ip=$(hostname -I)
     curl --data "key=${NOTIFY_TOKEN}&title=Otto&msg=My IP address is $ip!&event=otto" https://api.simplepush.io/send
-    fi
+fi
 
 # Check whether the path to the source directory is specified
-if [ ! -z "$src" ]; then
-    src="$DIR"
-else
-usage
+if [ -z "$src" ]; then
+    usage
     exit 1
 fi
 
-# If -b parameter specified,
-# perform a simple backup
-if [ -z "$back_dir" ]; then
+if [ -z "$(ls -A ${src})" ]; then
     echo
-    echo "----------------------------"
-    echo "     Transferring files     "
-    echo "----------------------------"
+    echo "ERROR: Is the storage device mounted?"
+    exit 1
+fi
+
+# If -b parameter specified, perform a simple backup
+if [ ! -z "$bak_dir" ]; then
+    echo
+    echo "--- Transferring files ---"
     echo
     notify "Transferring files"
 
+    mkdir -p "$bak_dir"
     rsync -avh "$src" "$bak_dir"
 
-    echo
-    echo "----------------"
-    echo "   All done.    "
-    echo "Have a nice day!"
-    echo "----------------"
-    echo
-    notify "All done. Have a nice day!"
-
+    if [ ! -z "$NOTIFY_TOKEN" ]; then
+        curl --data "key=${NOTIFY_TOKEN}&title=Otto&msg=All done!&event=otto" https://api.simplepush.io/send
+    else
+        echo
+        echo "--- All done. Have a nice day! ---"
+        echo
+        notify "All done. Have a nice day!"
+    fi
     exit 1
 fi
 
 mkdir -p "$TARGET"
 
 echo
-echo "----------------------------"
-echo "     Transferring files     "
-echo "----------------------------"
+echo "--- Transferring files ---"
 echo
-
 notify "Transferring files"
 
-rsync -avh --delete "$src" "$TARGET"
+rsync -avh "$src" "$TARGET"
 
 cd "$TARGET"
 
-echo "------------------------"
-echo "     Renaming files     "
-echo "------------------------"
 echo
-
+echo "--- Renaming files ---"
+echo
 notify "Renaming files"
 
 exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
 
-echo "-------------------------------"
-echo "     Writing EXIF metadata     "
-echo "-------------------------------"
 echo
-
+echo "--- Writing EXIF metadata ---"
+echo
 notify "Writing EXIF metadata"
 
 # Obtain and write copyright camera model, lens, and notes
@@ -214,11 +209,8 @@ if [ ! -z "$location" ]; then
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
         echo
-        echo "--------------------------------------------------------------"
-        echo "   Photon is not reachable. Check your Internet connection.   "
-        echo "                  Geotagging skipped.                         "
-        echo "--------------------------------------------------------------"
-
+        echo "--- Photon is not reachable. Geotagging skipped. ---"
+        echo
         notify "Photon is not reachable. Geotagging skipped. :-("
 
     else
@@ -236,11 +228,8 @@ if [ ! -z "$location" ]; then
             lonref="W"
         fi
         echo
-        echo "--------------------"
-        echo "     Geotagging     "
-        echo "--------------------"
+        echo "--- Geotagging ---"
         echo
-
         notify "Geotagging"
 
         exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref -r .
@@ -253,17 +242,17 @@ if [ ! -z "$gpx" ]; then
     fcount=$(ls -1 | wc -l)
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
-        echo "No GPX files are found."
+        echo
+        echo "--- No GPX files are found ---"
+        echo
+        notify "No GPX files are found"
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
         echo
-        echo "--------------------"
-        echo "   Geocorrelating   "
-        echo "--------------------"
+        echo "--- Geocorrelating ---"
         echo
-
         notify "Geocorrelating"
 
         fgpx=$(ls "$gpx")
@@ -271,11 +260,8 @@ if [ ! -z "$gpx" ]; then
     fi
     if [ "$fcount" -gt "1" ]; then
         echo
-        echo "---------------------------"
-        echo "     Merging GPX files     "
-        echo "---------------------------"
+        echo "--- Merging GPX files ---"
         echo
-
         notify "Merging GPX files"
 
         cd "$gpx"
@@ -283,31 +269,25 @@ if [ ! -z "$gpx" ]; then
         for f in *.gpx; do
             ff="$ff -f $f"
         done
-        gpsbabel -i gpx $ff -o gpx -F "output.gpx"
-        fgpx=$(pwd)"/output.gpx"
+        gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
+        fgpx=$(pwd)"/merged.gpx"
         exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 -r .
     fi
 fi
 
 echo
-echo "--------------------------"
-echo "     Organizing files     "
-echo "--------------------------"
+echo "--- Organizing files ---"
 echo
-
 notify "Organizing files"
 
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d -r .
 cd
-# find "$TARGET" -type d -exec chmod 755 {} \;
+
 if [ ! -z "$NOTIFY_TOKEN" ]; then
     curl --data "key=${NOTIFY_TOKEN}&title=Otto&msg=All done!&event=otto" https://api.simplepush.io/send
 else
     echo
-    echo "----------------"
-    echo "   All done.    "
-    echo "Have a nice day!"
-    echo "----------------"
+    echo "--- All done. Have a nice day! ---"
     echo
     notify "All done. Have a nice day!"
 fi
