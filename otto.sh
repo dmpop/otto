@@ -114,12 +114,6 @@ fi
 
 source "$CONFIG"
 
-# If Simplepush token is provided, push the IP address
-if [ ! -z "$SIMPLEPUSH_KEY" ]; then
-    ip=$(hostname -I)
-    curl --data "key=${SIMPLEPUSH_KEY}&title=Otto&msg=My IP address is $ip!&event=otto" https://api.simplepush.io/send
-fi
-
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     usage
