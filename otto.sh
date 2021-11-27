@@ -120,17 +120,19 @@ fi
 
 source "$CONFIG"
 
-# Check whether the path to the source directory is specified
-if [ -z "$src" ]; then
-    src="$DIR"
-    echo $src
-fi
+# If Simplepush token is provided, push the IP address
+if [ ! -z "$NOTIFY_TOKEN" ]; then
+ip=$(hostname -I)
+    curl --data "key=${NOTIFY_TOKEN}&title=Otto&msg=My IP address is $ip!&event=otto" https://api.simplepush.io/send
+    fi
 
-if [ -z "$src" ]; then
-    usage
+# Check whether the path to the source directory is specified
+if [ ! -z "$src" ]; then
+    src="$DIR"
+else
+usage
     exit 1
 fi
-
 
 # If -b parameter specified,
 # perform a simple backup
@@ -142,7 +144,7 @@ if [ -z "$back_dir" ]; then
     echo
     notify "Transferring files"
 
-    rsync -avh --delete "$src" "$bak_dir"
+    rsync -avh "$src" "$bak_dir"
 
     echo
     echo "----------------"
