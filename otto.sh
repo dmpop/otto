@@ -159,7 +159,7 @@ echo
 echo "--- Renaming files ---"
 echo
 
-exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" -r .
+exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" .
 
 echo
 echo "--- Writing EXIF metadata ---"
@@ -213,7 +213,7 @@ if [ ! -z "$location" ]; then
         echo "--- Geotagging ---"
         echo
 
-        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref -r .
+        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref .
     fi
 fi
 
@@ -235,7 +235,7 @@ if [ ! -z "$gpx" ]; then
         echo
 
         fgpx=$(ls "$gpx")
-        exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 -r .
+        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 .
     fi
     if [ "$fcount" -gt "1" ]; then
         echo
@@ -249,7 +249,7 @@ if [ ! -z "$gpx" ]; then
         done
         gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
         fgpx=$(pwd)"/merged.gpx"
-        exiftool -overwrite_original -r -geotag "$fgpx" -geosync=180 -r .
+        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 .
     fi
 fi
 
@@ -257,7 +257,7 @@ echo
 echo "--- Organizing files ---"
 echo
 
-exiftool '-Directory<CreateDate' -d ./%Y-%m-%d -r .
+exiftool '-Directory<CreateDate' -d ./%Y-%m-%d .
 cd
 
 if [ ! -z "$SIMPLEPUSH_KEY" ]; then
