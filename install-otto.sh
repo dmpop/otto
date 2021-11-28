@@ -30,6 +30,9 @@ fi
 
 cd
 
+mkdir -p $HOME/Android
+mkdir -p $HOME/iOS
+
 if [ ! -d "$HOME/bin" ]; then
         mkdir $HOME/bin
         echo 'export PATH='$HOME'/bin:$PATH' >>.bashrc
