@@ -11,11 +11,16 @@ Hello! I'm Otto.
 
 Otto is a shell script for importing and organizing RAW and JPEG files. The script performs the following tasks:
 
-- transfer RAW and JPEG files from an external USB device (for example, USB card reader)
-- rename the transferred files using the _YYYYMMDD-HHMMSS_ format (can be customized)
-- write camera model, lens, and weather conditions to the EXIF metadata
-- geotag or geocorrelate the transferred files
-- group the processed files into folders by date
+- Transfer files to the predefined destination directory.
+- Rename the transferred files using the _YYYYMMDD-HHMMSS_ naming format.
+- For each photo, obtain camera model and lens model.
+- If enabled, fetch text notes for the dates corresponding to the dates of the photos.
+- Write the obtained camera model, lens model, and notes to the **Comments** field of each photo's EXIF metadata.
+- Write the predefined copyright notice to the **Copyright** field of each photo's EXIF metadata.
+- If keywords are specified, write them into each photo's EXIF metadata.
+- If enabled, geotag photos using the geographical coordinates of the specified city.
+- If enabled, merge multiple GPX tracks and geocorrelate photos using the resulting GPX file.
+- Group the transferred files into folders by date using the _YYYY-MM-DD_ naming format.
 
 # Dependencies
 
@@ -29,12 +34,13 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 
 ## Usage
 
-    otto.sh -d <dir> -g <location> -c <dir> -b <dir>
+    otto.sh -d <dir> -g <location> -c <dir> -b <dir> -k <keyword1, keyword2, keyword3>
 
 - `-d` absolute path to the source directory
 - `-g` name of the city where the photos were taken (optional)
 - `-c` path to a directory containing one or several GPX files (optional)
-- `-b` Perform backup only (optional)
+- `-b` perform backup only (optional)
+- `-k` write specified keywords into EXIF medata
 
 ## Problems?
 
@@ -60,4 +66,3 @@ Dmitri Popov [dmpop@linux.com](mailto:dmpop@linux.com)
 
 The [GNU General Public License version 3](http://www.gnu.org/licenses/gpl-3.0.en.html)
 
-<noscript><a href="https://liberapay.com/dmpop/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>

@@ -124,7 +124,7 @@ if [ -z "$src" ]; then
     exit 1
 fi
 
-if [ -z "$(ls -A ${src})" ]; then
+if [ -z '$(ls -A "'$src'")' ]; then
     echo
     echo "ERROR: Is the storage device mounted?"
     exit 1
