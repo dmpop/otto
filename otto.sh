@@ -33,7 +33,7 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b <dir>
+  $0 -d <dir> -g <location> -c <dir> -b <dir> -k "keyword1, keyword2, keyword3"
 
 OPTIONS:
 --------
@@ -41,6 +41,7 @@ OPTIONS:
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files (optional)
   -b Perform backup only
+  -k Write specified keywords into EXIF medata
 EOF
     exit 1
 }
@@ -55,7 +56,7 @@ echo "         Hello! I'm Otto."
 echo ''
 
 # Obtain parameter values
-while getopts "d:g:c:b:" opt; do
+while getopts "d:g:c:b:k:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -68,6 +69,9 @@ while getopts "d:g:c:b:" opt; do
         ;;
     b)
         bak_dir=$OPTARG
+        ;;
+    k)
+        keywords=$OPTARG
         ;;
     \?)
         usage
@@ -147,6 +151,11 @@ fi
 
 mkdir -p "$TARGET"
 
+# Check whether keywords are provided
+if [ -z "$keywords" ]; then
+    keywords=""
+fi
+
 echo
 echo "--- Transferring files ---"
 echo
@@ -184,7 +193,7 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" "$file"
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" -sep ", " -keywords="$keywords" "$file"
 done
 
 if [ ! -z "$location" ]; then
