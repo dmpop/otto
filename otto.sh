@@ -24,6 +24,17 @@ if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x 
     exit 1
 fi
 
+# Spinner
+spinner() {
+    local i sp n
+    sp='/-\|'
+    n=${#sp}
+    printf ' '
+    while sleep 0.1; do
+        printf "%s\b" "${sp:i++%n:1}"
+    done
+}
+
 # Usage prompt
 usage() {
     cat <<EOF
@@ -129,24 +140,29 @@ fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
     echo
-    echo "ERROR: Is the storage device mounted?"
+    echo ">>> ERROR: Is the storage device mounted?"
     exit 1
+fi
+
+if [ -f "$HOME/otto.log" ]; then
+    rm "$HOME/otto.log"
 fi
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$bak_dir" ]; then
     echo
-    echo "--- Transferring files ---"
-    echo
+    echo ">>> Transferring files "
+    spinner &
 
     mkdir -p "$bak_dir"
-    rsync -avh "$src" "$bak_dir"
+    rsync -avh "$src" "$bak_dir" >>"$HOME/otto.log" 2>&1
+    kill "$!"
 
     if [ ! -z "$NTFY_TOPIC" ]; then
-        curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC"
+        curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
     else
         echo
-        echo "--- All done. Have a nice day! ---"
+        echo ">>> All done. Have a nice day!"
         echo
     fi
     exit 1
@@ -180,22 +196,29 @@ if [ -z "$keywords" ]; then
 fi
 
 echo
-echo "--- Transferring files ---"
-echo
+echo ">>> Transferring files"
+spinner &
 
-find "$src" -type f -exec cp -t "$TARGET" {} +
+mkdir -p "$TARGET"
+find "$src" -type f -exec cp -t "$TARGET" {} + >>"$HOME/otto.log" 2>&1
+
+kill "$!"
 
 cd "$TARGET"
 
 echo
-echo "--- Renaming files ---"
+echo ">>> Renaming files"
 echo
 
-exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" .
+spinner &
+
+exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" . >>"$HOME/otto.log" 2>&1
+
+kill "$!"
 
 echo
-echo "--- Writing EXIF metadata ---"
-echo
+echo ">>> Writing EXIF metadata"
+spinner &
 
 # Obtain and write copyright camera model, lens, and notes
 for file in *.*; do
@@ -216,15 +239,17 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" -sep ", " -keywords="$keywords" "$file"
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" -sep ", " -keywords="$keywords" "$file" >>"$HOME/otto.log" 2>&1
 done
+
+kill "$!"
 
 if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
         echo
-        echo "--- Photon is not reachable. Geotagging skipped. ---"
+        echo ">>> Photon is not reachable. Geotagging skipped."
         echo
 
     else
@@ -242,10 +267,10 @@ if [ ! -z "$location" ]; then
             lonref="W"
         fi
         echo
-        echo "--- Geotagging ---"
+        echo ">>> Geotagging"
         echo
 
-        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref .
+        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"$HOME/otto.log" 2>&1
     fi
 fi
 
@@ -256,24 +281,20 @@ if [ ! -z "$gpx" ]; then
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
         echo
-        echo "--- No GPX files are found ---"
+        echo ">>> No GPX files are found."
         echo
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
         echo
-        echo "--- Geocorrelating ---"
-        echo
+        echo ">>> Geocorrelating"
+        spinner &
 
         fgpx=$(ls "$gpx")
-        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 .
+        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 . >>"$HOME/otto.log" 2>&1
     fi
     if [ "$fcount" -gt "1" ]; then
-        echo
-        echo "--- Merging GPX files ---"
-        echo
-
         cd "$gpx"
         ff=""
         for f in *.gpx; do
@@ -285,17 +306,21 @@ if [ ! -z "$gpx" ]; then
     fi
 fi
 
-echo
-echo "--- Organizing files ---"
-echo
+kill "$!"
 
-exiftool '-Directory<CreateDate' -d ./%Y-%m-%d .
+echo
+echo ">>> Organizing files"
+spinner &
+
+exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"$HOME/otto.log" 2>&1
 cd
 
+kill "$!"
+
 if [ ! -z "$NTFY_TOPIC" ]; then
-    curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC"
+    curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
 else
     echo
-    echo "--- All done. Have a nice day! ---"
+    echo ">>> All done. Have a nice day!"
     echo
 fi
