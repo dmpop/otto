@@ -87,7 +87,7 @@ if [ ! -f "$CONFIG" ]; then
         --form "\n          Specify the required settings" 16 56 7 \
         " Target directory:" 1 4 "/home/user/OTTO" 1 23 25 512 \
         " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
-        "   Simplepush key:" 3 4 "Simplepush key" 3 23 25 512 \
+        "       NTFY topic:" 3 4 "unique-string" 3 23 25 512 \
         "    Remote server:" 4 4 "hello.xyz" 4 23 25 512 \
         "      Remote path:" 5 4 "/var/www/html/data" 5 23 25 512 \
         "            User:" 6 4 "Remote username" 6 23 25 512 \
@@ -97,14 +97,14 @@ if [ ! -f "$CONFIG" ]; then
     if [ -s "/tmp/dialog.tmp" ]; then
         target=$(sed -n 1p /tmp/dialog.tmp)
         copyright=$(sed -n 2p /tmp/dialog.tmp)
-        simplepush_key=$(sed -n 3p /tmp/dialog.tmp)
+        NTFY_TOPIC=$(sed -n 3p /tmp/dialog.tmp)
         server=$(sed -n 4p /tmp/dialog.tmp)
         path=$(sed -n 5p /tmp/dialog.tmp)
         user=$(sed -n 6p /tmp/dialog.tmp)
         password=$(sed -n 7p /tmp/dialog.tmp)
         echo "TARGET='$target'" >>"$CONFIG"
         echo "COPYRIGHT='$copyright'" >>"$CONFIG"
-        echo "SIMPLEPUSH_KEY='$simplepush_key'" >>"$CONFIG"
+        echo "NTFY_TOPIC='$NTFY_TOPIC'" >>"$CONFIG"
         echo "REMOTE_SERVER='$server'" >>"$CONFIG"
         echo "REMOTE_PATH='$path'" >>"$CONFIG"
         echo "USER='$user'" >>"$CONFIG"
@@ -139,8 +139,8 @@ if [ ! -z "$bak_dir" ]; then
     mkdir -p "$bak_dir"
     rsync -avh "$src" "$bak_dir"
 
-    if [ ! -z "$SIMPLEPUSH_KEY" ]; then
-        curl --data "key=${SIMPLEPUSH_KEY}&title=Otto&msg=All done!&event=otto" https://api.simplepush.io/send
+    if [ ! -z "$NTFY_TOPIC" ]; then
+        curl -d "All done!" ntfy.sh/${NTFY_TOPIC}
     else
         echo
         echo "--- All done. Have a nice day! ---"
@@ -160,7 +160,7 @@ echo
 echo "--- Transferring files ---"
 echo
 
-rsync -avh "$src" "$TARGET"
+find "$src" -type f -exec cp -t "$TARGET" {} +
 
 cd "$TARGET"
 
@@ -269,8 +269,8 @@ echo
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d .
 cd
 
-if [ ! -z "$SIMPLEPUSH_KEY" ]; then
-    curl --data "key=${SIMPLEPUSH_KEY}&title=Otto&msg=All done!&event=otto" https://api.simplepush.io/send
+if [ ! -z "$NTFY_TOPIC" ]; then
+    curl -d "All done!" ntfy.sh/${NTFY_TOPIC}
 else
     echo
     echo "--- All done. Have a nice day! ---"
