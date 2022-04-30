@@ -84,27 +84,30 @@ CONFIG="$HOME/.otto.cfg"
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
     dialog --title "Otto configuration" \
-        --form "\n          Specify the required settings" 16 56 7 \
+        --form "\n          Specify the required settings" 16 56 8 \
         " Target directory:" 1 4 "/home/user/OTTO" 1 23 25 512 \
         " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
-        "       NTFY topic:" 3 4 "unique-string" 3 23 25 512 \
-        "    Remote server:" 4 4 "hello.xyz" 4 23 25 512 \
-        "      Remote path:" 5 4 "/var/www/html/data" 5 23 25 512 \
-        "            User:" 6 4 "Remote username" 6 23 25 512 \
-        "        Password:" 7 4 "Remote user password" 7 23 25 512 \
+        "      NTFY server:" 3 4 "ntfy.sh" 3 23 25 512 \
+        "       NTFY topic:" 4 4 "unique-string" 4 23 25 512 \
+        "    Remote server:" 5 4 "hello.xyz" 5 23 25 512 \
+        "      Remote path:" 6 4 "/var/www/html/data" 6 23 25 512 \
+        "            User:" 7 4 "Remote username" 7 23 25 512 \
+        "        Password:" 8 4 "Remote user password" 8 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
         target=$(sed -n 1p /tmp/dialog.tmp)
         copyright=$(sed -n 2p /tmp/dialog.tmp)
-        NTFY_TOPIC=$(sed -n 3p /tmp/dialog.tmp)
-        server=$(sed -n 4p /tmp/dialog.tmp)
-        path=$(sed -n 5p /tmp/dialog.tmp)
-        user=$(sed -n 6p /tmp/dialog.tmp)
-        password=$(sed -n 7p /tmp/dialog.tmp)
+        ntfy_server=$(sed -n 3p /tmp/dialog.tmp)
+        ntfy_topic=$(sed -n 4p /tmp/dialog.tmp)
+        server=$(sed -n 5p /tmp/dialog.tmp)
+        path=$(sed -n 6p /tmp/dialog.tmp)
+        user=$(sed -n 7p /tmp/dialog.tmp)
+        password=$(sed -n 8p /tmp/dialog.tmp)
         echo "TARGET='$target'" >>"$CONFIG"
         echo "COPYRIGHT='$copyright'" >>"$CONFIG"
-        echo "NTFY_TOPIC='$NTFY_TOPIC'" >>"$CONFIG"
+        echo "NTFY_SERVER='$ntfy_server'" >>"$CONFIG"
+        echo "NTFY_TOPIC='$ntfy_topic'" >>"$CONFIG"
         echo "REMOTE_SERVER='$server'" >>"$CONFIG"
         echo "REMOTE_PATH='$path'" >>"$CONFIG"
         echo "USER='$user'" >>"$CONFIG"
@@ -140,7 +143,7 @@ if [ ! -z "$bak_dir" ]; then
     rsync -avh "$src" "$bak_dir"
 
     if [ ! -z "$NTFY_TOPIC" ]; then
-        curl -d "All done!" ntfy.sh/${NTFY_TOPIC}
+        curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC"
     else
         echo
         echo "--- All done. Have a nice day! ---"
@@ -149,7 +152,27 @@ if [ ! -z "$bak_dir" ]; then
     exit 1
 fi
 
-mkdir -p "$TARGET"
+if [ "$(ls -A $TARGET)" ]; then
+    dialog --clear \
+        --title "Non-empty directory" \
+        --backtitle "Otto" \
+        --yesno "The target directory is not empty. Do you want to empty it?" 7 65
+
+    response=$?
+    case $response in
+    0)
+        clear
+        rm -rf "$TARGET"
+        mkdir -p "$TARGET"
+        ;;
+    1)
+        exit 1
+        ;;
+    255)
+        exit 1
+        ;;
+    esac
+fi
 
 # Check whether keywords are provided
 if [ -z "$keywords" ]; then
@@ -270,7 +293,7 @@ exiftool '-Directory<CreateDate' -d ./%Y-%m-%d .
 cd
 
 if [ ! -z "$NTFY_TOPIC" ]; then
-    curl -d "All done!" ntfy.sh/${NTFY_TOPIC}
+    curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC"
 else
     echo
     echo "--- All done. Have a nice day! ---"
