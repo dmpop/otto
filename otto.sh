@@ -98,8 +98,8 @@ if [ ! -f "$CONFIG" ]; then
         --form "\n          Specify the required settings" 16 56 8 \
         " Target directory:" 1 4 "/home/user/OTTO" 1 23 25 512 \
         " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
-        "      NTFY server:" 3 4 "ntfy.sh" 3 23 25 512 \
-        "       NTFY topic:" 4 4 "unique-string" 4 23 25 512 \
+        "      ntfy server:" 3 4 "ntfy.sh" 3 23 25 512 \
+        "       ntfy topic:" 4 4 "unique-string" 4 23 25 512 \
         "    Remote server:" 5 4 "hello.xyz" 5 23 25 512 \
         "      Remote path:" 6 4 "/var/www/html/data" 6 23 25 512 \
         "            User:" 7 4 "Remote username" 7 23 25 512 \
@@ -140,29 +140,35 @@ fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
     echo
-    echo ">>> ERROR: Is the storage device mounted?"
+    echo "ERROR: Is the storage device mounted?"
     exit 1
 fi
 
-if [ -f "$HOME/otto.log" ]; then
-    rm "$HOME/otto.log"
+if [ -f "/tmp/otto.log" ]; then
+    rm "/tmp/otto.log"
 fi
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$bak_dir" ]; then
     echo
-    echo ">>> Transferring files "
+    echo "Transferring files "
+    echo "---"
     spinner &
 
     mkdir -p "$bak_dir"
-    rsync -avh "$src" "$bak_dir" >>"$HOME/otto.log" 2>&1
+    rsync -avh "$src" "$bak_dir" >>"/tmp/otto.log" 2>&1
     kill "$!"
 
     if [ ! -z "$NTFY_TOPIC" ]; then
-        curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
+        curl \
+            -d "I'm done. Have a nice day!" \
+            -H "Title: Message from Otto" \
+            -H "Priority: high" \
+            -H "Tags: monkey" \
+            "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
     else
         echo
-        echo ">>> All done. Have a nice day!"
+        echo "All done. Have a nice day!"
         echo
     fi
     exit 1
@@ -196,28 +202,29 @@ if [ -z "$keywords" ]; then
 fi
 
 echo
-echo ">>> Transferring files"
+echo "Transferring files"
+echo "---"
 spinner &
 
 mkdir -p "$TARGET"
-find "$src" -type f -exec cp -t "$TARGET" {} + >>"$HOME/otto.log" 2>&1
+find "$src" -type f -exec cp -t "$TARGET" {} + >>"/tmp/otto.log" 2>&1
 
 kill "$!"
 
 cd "$TARGET"
 
 echo
-echo ">>> Renaming files"
-echo
-
+echo "Renaming files"
+echo "---"
 spinner &
 
-exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" . >>"$HOME/otto.log" 2>&1
+exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" . >>"/tmp/otto.log" 2>&1
 
 kill "$!"
 
 echo
-echo ">>> Writing EXIF metadata"
+echo "Writing EXIF metadata"
+echo "---"
 spinner &
 
 # Obtain and write copyright camera model, lens, and notes
@@ -239,7 +246,7 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" -sep ", " -keywords="$keywords" "$file" >>"$HOME/otto.log" 2>&1
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
 done
 
 kill "$!"
@@ -249,7 +256,7 @@ if [ ! -z "$location" ]; then
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
         echo
-        echo ">>> Photon is not reachable. Geotagging skipped."
+        echo "Photon is not reachable. Geotagging skipped."
         echo
 
     else
@@ -267,10 +274,10 @@ if [ ! -z "$location" ]; then
             lonref="W"
         fi
         echo
-        echo ">>> Geotagging"
+        echo "Geotagging"
         echo
 
-        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"$HOME/otto.log" 2>&1
+        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
     fi
 fi
 
@@ -281,18 +288,19 @@ if [ ! -z "$gpx" ]; then
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
         echo
-        echo ">>> No GPX files are found."
+        echo "No GPX files are found."
         echo
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
         echo
-        echo ">>> Geocorrelating"
+        echo "Geocorrelating"
+        echo "---"
         spinner &
 
         fgpx=$(ls "$gpx")
-        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 . >>"$HOME/otto.log" 2>&1
+        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 . >>"/tmp/otto.log" 2>&1
     fi
     if [ "$fcount" -gt "1" ]; then
         cd "$gpx"
@@ -309,18 +317,24 @@ fi
 kill "$!"
 
 echo
-echo ">>> Organizing files"
+echo "Organizing files"
+echo "---"
 spinner &
 
-exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"$HOME/otto.log" 2>&1
+exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
 
 kill "$!"
 
 if [ ! -z "$NTFY_TOPIC" ]; then
-    curl -d "All done. Have a nice day!" "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
+    curl \
+        -d "I'm done. Have a nice day!" \
+        -H "Title: Message from Otto" \
+        -H "Priority: high" \
+        -H "Tags: monkey" \
+        "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
 else
     echo
-    echo ">>> All done. Have a nice day!"
+    echo "All done. Have a nice day!"
     echo
 fi
