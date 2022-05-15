@@ -207,9 +207,8 @@ echo "Transferring and renaming files"
 echo "---"
 spinner &
 
-mkdir -p "$TARGET"
 cd "$src"
-exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" . >>"/tmp/otto.log" 2>&1
+exiftool -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
 kill "$!"
 
@@ -217,6 +216,8 @@ echo
 echo "Writing EXIF metadata"
 echo "---"
 spinner &
+
+cd "$TARGET"
 
 # Obtain and write copyright camera model, lens, and notes
 for file in *.*; do
