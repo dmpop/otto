@@ -157,6 +157,7 @@ if [ ! -z "$bak_dir" ]; then
 
     mkdir -p "$bak_dir"
     rsync -avh "$src" "$bak_dir" >>"/tmp/otto.log" 2>&1
+
     kill "$!"
 
     if [ ! -z "$NTFY_TOPIC" ]; then
@@ -202,22 +203,12 @@ if [ -z "$keywords" ]; then
 fi
 
 echo
-echo "Transferring files"
+echo "Transferring and renaming files"
 echo "---"
 spinner &
 
 mkdir -p "$TARGET"
-find "$src" -type f -exec cp -t "$TARGET" {} + >>"/tmp/otto.log" 2>&1
-
-kill "$!"
-
-cd "$TARGET"
-
-echo
-echo "Renaming files"
-echo "---"
-spinner &
-
+cd "$src"
 exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" . >>"/tmp/otto.log" 2>&1
 
 kill "$!"
