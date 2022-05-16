@@ -44,7 +44,7 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b <dir> -k "keyword1, keyword2, keyword3"
+  $0 -d <dir> -g <location> -c <dir> -b -k "keyword1, keyword2, keyword3"
 
 OPTIONS:
 --------
@@ -66,8 +66,10 @@ echo '         ---------------='
 echo "         Hello! I'm Otto."
 echo ''
 
+CONFIG="$HOME/.otto.cfg"
+
 # Obtain parameter values
-while getopts "d:g:c:b:k:" opt; do
+while getopts "d:g:c:bk:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -79,7 +81,7 @@ while getopts "d:g:c:b:k:" opt; do
         gpx=$OPTARG
         ;;
     b)
-        bak_dir=$OPTARG
+        b=1
         ;;
     k)
         keywords=$OPTARG
@@ -90,7 +92,6 @@ while getopts "d:g:c:b:k:" opt; do
     esac
 done
 shift $((OPTIND - 1))
-CONFIG="$HOME/.otto.cfg"
 
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
@@ -149,14 +150,15 @@ if [ -f "/tmp/otto.log" ]; then
 fi
 
 # If -b parameter specified, perform a simple backup
-if [ ! -z "$bak_dir" ]; then
+if [ ! -z $b ]; then
     echo
     echo "Transferring files "
     echo "---"
     spinner &
 
-    mkdir -p "$bak_dir"
-    rsync -avh "$src" "$bak_dir" >>"/tmp/otto.log" 2>&1
+    mkdir -p "$TARGET"
+    rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
+
     kill "$!"
 
     if [ ! -z "$NTFY_TOPIC" ]; then
@@ -174,6 +176,7 @@ if [ ! -z "$bak_dir" ]; then
     exit 1
 fi
 
+mkdir -p "$TARGET"
 if [ "$(ls -A $TARGET)" ]; then
     dialog --clear \
         --title "Non-empty directory" \
@@ -202,23 +205,12 @@ if [ -z "$keywords" ]; then
 fi
 
 echo
-echo "Transferring files"
+echo "Transferring and renaming files"
 echo "---"
 spinner &
 
-mkdir -p "$TARGET"
-find "$src" -type f -exec cp -t "$TARGET" {} + >>"/tmp/otto.log" 2>&1
-
-kill "$!"
-
-cd "$TARGET"
-
-echo
-echo "Renaming files"
-echo "---"
-spinner &
-
-exiftool -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -directory="$TARGET" . >>"/tmp/otto.log" 2>&1
+cd "$src"
+exiftool -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
 kill "$!"
 
@@ -226,6 +218,8 @@ echo
 echo "Writing EXIF metadata"
 echo "---"
 spinner &
+
+cd "$TARGET"
 
 # Obtain and write copyright camera model, lens, and notes
 for file in *.*; do
