@@ -44,7 +44,7 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -k "keyword1, keyword2, keyword3"
+  $0 -d <dir> -g <location> -c <dir> -b -k "keyword1, keyword2, keyword3" -p <file>
 
 OPTIONS:
 --------
@@ -53,6 +53,7 @@ OPTIONS:
   -c path to a directory containing one or several GPX files (optional)
   -b Perform backup only
   -k Write specified keywords into EXIF medata
+  -p Process using the specified Hald CLUT file and (slightly) sharpen the result (optional)
 EOF
     exit 1
 }
@@ -69,7 +70,7 @@ echo ''
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bk:" opt; do
+while getopts "d:g:c:bk:p:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -81,10 +82,13 @@ while getopts "d:g:c:bk:" opt; do
         gpx=$OPTARG
         ;;
     b)
-        b=1
+        backup=1
         ;;
     k)
         keywords=$OPTARG
+        ;;
+    p)
+        process=$OPTARG
         ;;
     \?)
         usage
@@ -150,7 +154,7 @@ if [ -f "/tmp/otto.log" ]; then
 fi
 
 # If -b parameter specified, perform a simple backup
-if [ ! -z $b ]; then
+if [ ! -z "$backup" ]; then
     echo
     echo "Transferring files "
     echo "---"
@@ -165,7 +169,6 @@ if [ ! -z $b ]; then
         curl \
             -d "I'm done. Have a nice day!" \
             -H "Title: Message from Otto" \
-            -H "Priority: high" \
             -H "Tags: monkey" \
             "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
     else
@@ -310,6 +313,20 @@ fi
 
 kill "$!"
 
+if [ ! -z "$process" ]; then
+    echo
+    echo "Processing files"
+    echo "---"
+    spinner &
+    shopt -s nocaseglob
+    for file in *.jpg; do
+        filename=${file%.*}
+        convert "$file" "$process" -hald-clut "$filename.jpeg"
+        mogrify -sharpen 0x2 "$filename.jpeg"
+    done
+    kill "$!"
+fi
+
 echo
 echo "Organizing files"
 echo "---"
@@ -324,7 +341,6 @@ if [ ! -z "$NTFY_TOPIC" ]; then
     curl \
         -d "I'm done. Have a nice day!" \
         -H "Title: Message from Otto" \
-        -H "Priority: high" \
         -H "Tags: monkey" \
         "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
 else
