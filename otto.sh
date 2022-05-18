@@ -50,10 +50,10 @@ OPTIONS:
 --------
   -d Specifies the source directory
   -g Geotag using coordinates of the specified location (city)
-  -c path to a directory containing one or several GPX files (optional)
+  -c path to a directory containing one or several GPX files
   -b Perform backup only
   -k Write specified keywords into EXIF medata
-  -p Process using the specified Hald CLUT file and (slightly) sharpen the result (optional)
+  -p Process using the specified Hald CLUT file and (slightly) sharpen the result
 EOF
     exit 1
 }
@@ -309,9 +309,8 @@ if [ ! -z "$gpx" ]; then
         fgpx=$(pwd)"/merged.gpx"
         exiftool -overwrite_original -geotag "$fgpx" -geosync=180 .
     fi
+    kill "$!"
 fi
-
-kill "$!"
 
 if [ ! -z "$process" ]; then
     echo
@@ -321,8 +320,8 @@ if [ ! -z "$process" ]; then
     shopt -s nocaseglob
     for file in *.jpg; do
         filename=${file%.*}
-        convert "$file" "$process" -hald-clut "$filename.jpeg"
-        mogrify -sharpen 0x2 "$filename.jpeg"
+        convert "$file" "$process" -hald-clut "$filename-0.jpeg"
+        mogrify -sharpen 0x2 "$filename-0.jpeg"
     done
     kill "$!"
 fi
