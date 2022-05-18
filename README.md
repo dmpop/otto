@@ -9,7 +9,9 @@
 Hello! I'm Otto.
 ```
 
-Otto is a shell script for importing and organizing RAW and JPEG files. The script performs the following tasks:
+Otto is a shell script for importing and organizing RAW and JPEG files.
+
+## Features
 
 - Transfer files to the predefined destination directory.
 - Rename the transferred files using the _YYYYMMDD-HHMMSS_ naming format.
@@ -18,9 +20,11 @@ Otto is a shell script for importing and organizing RAW and JPEG files. The scri
 - Write the obtained camera model, lens model, and notes to the **Comments** field of each photo's EXIF metadata.
 - Write the predefined copyright notice to the **Copyright** field of each photo's EXIF metadata.
 - If keywords are specified, write them into each photo's EXIF metadata.
-- If enabled, geotag photos using the geographical coordinates of the specified city.
-- If enabled, merge multiple GPX tracks and geocorrelate photos using the resulting GPX file.
+- Geotag photos using the geographical coordinates of the specified city.
+- Merge multiple GPX tracks and geocorrelate photos using the resulting GPX file.
+- Apply a Hald CLUT preset and slight sharpening to JPEG files.
 - Group the transferred files into folders by date using the _YYYY-MM-DD_ naming format.
+- Notify on job completion via [ntfy](http://ntfy.sh).
 
 # Dependencies
 
@@ -30,17 +34,18 @@ Otto requires the following tools: `dialog`, `getopt`, `bc`, `jq`, `cURL`, `Exif
 
 The [Linux Photography](https://gumroad.com/l/linux-photography) book provides detailed instructions on installing and using Otto. Get your copy at [Google Play Store](https://play.google.com/store/books/details/Dmitri_Popov_Linux_Photography?id=cO70CwAAQBAJ) or [Gumroad](https://gumroad.com/l/linux-photography).
 
-<img src="https://tinyvps.xyz/img/linux-photography.jpeg" title="Linux Photography book" width="200"/>
+<img src="https://tokyoma.de/bookcovers/linux-photography.jpg" title="Linux Photography book" width="200"/>
 
 ## Usage
 
-    otto.sh -d <dir> -g <location> -c <dir> -b <dir> -k <keyword1, keyword2, keyword3>
+    otto.sh -d <dir> -g <location> -c <dir> -b -k "keyword1, keyword2, keyword3" -p <file>
 
 - `-d` absolute path to the source directory
-- `-g` name of the city where the photos were taken (optional)
-- `-c` path to a directory containing one or several GPX files (optional)
-- `-b` perform backup only (optional)
+- `-g` name of the city where the photos were taken
+- `-c` path to a directory containing one or several GPX files
+- `-b` perform backup only
 - `-k` write specified keywords into EXIF medata
+- `-p` Apply the specified Hald CLUT file and sharpening to all JPEG files
 
 ## Problems?
 

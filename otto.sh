@@ -53,7 +53,7 @@ OPTIONS:
   -c path to a directory containing one or several GPX files
   -b Perform backup only
   -k Write specified keywords into EXIF medata
-  -p Process using the specified Hald CLUT file and (slightly) sharpen the result
+  -p Apply the specified Hald CLUT file and sharpening to all JPEG files
 EOF
     exit 1
 }
