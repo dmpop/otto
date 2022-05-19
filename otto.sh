@@ -44,16 +44,26 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -k "keyword1, keyword2, keyword3" -p <file>
-
+  $0 -d <dir> -g <location> -c <dir> -b -n "This is note" -k "keyword1, keyword2, keyword3" -p <file>
+  
 OPTIONS:
 --------
   -d Specifies the source directory
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files
   -b Perform backup only
-  -k Write specified keywords into EXIF medata
+  -n Write the specificed text into the Comment field on EXIF medata
+  -k Write the specified keywords into EXIF medata
   -p Apply the specified Hald CLUT file and sharpening to all JPEG files
+
+EXAMPLES:
+---------
+  $0 -d /media/$USER/sdcard (import and organize geotagged RAW and JPEG files)
+  $0 -d /media/$USER/sdcard -b (back up RAW and JPEG files without any changes)
+  $0 -d /media/$USER/sdcard -g Tokyo (back up and geotag RAW and JPEG files using the specified city)
+  $0 -d /media/$USER/sdcard -c /home/$USER/gpx (import, geocorrelate, and organize RAW and JPEG files)
+  $0 -d /media/$USER/sdcard -n "Evening walk around Tokyo" -k "streets, nightscapes, japan" (import and organize geotagged RAW and JPEG files. Add the specified note and keywords to each file)
+  $0 -d /media/$USER/sdcard -p /home/$USER/hald-clut.png (import and organize geotagged RAW and JPEG files. Apply the specified Hald CLUT preset to each file)
 EOF
     exit 1
 }
@@ -70,7 +80,7 @@ echo ''
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bk:p:" opt; do
+while getopts "d:g:c:bn:k:p:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -83,6 +93,9 @@ while getopts "d:g:c:bk:p:" opt; do
         ;;
     b)
         backup=1
+        ;;
+    n)
+        note=$OPTARG
         ;;
     k)
         keywords=$OPTARG
@@ -228,16 +241,19 @@ cd "$TARGET"
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
-    if [ ! -z "$REMOTE_SERVER" ]; then
+    if [ ! -z "$note" ]; then
+        notes="$note"
+    elif [ ! -z "$REMOTE_SERVER" ]; then
         if [ ! -f "$HOME/$wf" ]; then
             sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME"
         fi
         if [ -f "$HOME/$wf" ]; then
             notes=$(<"$HOME/$wf")
-        else
-            notes=""
         fi
+    else
+        notes=""
     fi
+
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
@@ -259,13 +275,13 @@ if [ ! -z "$location" ]; then
     else
         # Obtain latitude and longitude for the specified location
         lat=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
-        if (($(echo "$lat > 0" | bc -l)); then
+        if (($(echo "$lat > 0" | bc -l))); then
             latref="N"
         else
             latref="S"
         fi
         lon=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[0]')
-        if (($(echo "$lon > 0" | bc -l)); then
+        if (($(echo "$lon > 0" | bc -l))); then
             lonref="E"
         else
             lonref="W"
