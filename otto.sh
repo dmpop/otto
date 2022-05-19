@@ -68,6 +68,21 @@ EOF
     exit 1
 }
 
+# Notification function
+function notify() {
+    if [ ! -z "$NTFY_TOPIC" ]; then
+        curl \
+            -d "I'm done. Have a nice day!" \
+            -H "Title: Message from Otto" \
+            -H "Tags: monkey" \
+            "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
+    else
+        echo
+        echo "All done. Have a nice day!"
+        echo
+    fi
+}
+
 echo ''
 echo '               ~'
 echo '            o{°_°}o'
@@ -201,18 +216,7 @@ if [ ! -z "$backup" ]; then
     rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
 
     kill "$!"
-
-    if [ ! -z "$NTFY_TOPIC" ]; then
-        curl \
-            -d "I'm done. Have a nice day!" \
-            -H "Title: Message from Otto" \
-            -H "Tags: monkey" \
-            "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
-    else
-        echo
-        echo "All done. Have a nice day!"
-        echo
-    fi
+    notify
     exit 1
 fi
 
@@ -254,7 +258,7 @@ for file in *.*; do
     else
         note=""
     fi
-
+    
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
@@ -352,15 +356,4 @@ exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
 
 kill "$!"
-
-if [ ! -z "$NTFY_TOPIC" ]; then
-    curl \
-        -d "I'm done. Have a nice day!" \
-        -H "Title: Message from Otto" \
-        -H "Tags: monkey" \
-        "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
-else
-    echo
-    echo "All done. Have a nice day!"
-    echo
-fi
+notify
