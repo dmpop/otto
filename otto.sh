@@ -24,6 +24,11 @@ if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x 
     exit 1
 fi
 
+# define colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
 # Spinner
 spinner() {
     local i sp n
@@ -177,7 +182,7 @@ fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
     echo
-    printf "ERROR: Is the storage device mounted?"
+    printf "${RED}ERROR: Is the storage device mounted?${NC}"
     exit 1
 fi
 
@@ -213,7 +218,7 @@ fi
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
     echo
-    printf "Transferring files "
+    printf "${GREEN}Transferring files${NC} "
     spinner &
 
     rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
@@ -231,7 +236,7 @@ if [ -z "$keywords" ]; then
 fi
 
 echo
-printf "Transferring and renaming files"
+printf "${GREEN}Transferring and renaming files${NC} "
 spinner &
 
 cd "$src"
@@ -240,7 +245,7 @@ exiftool -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tm
 kill "$!"
 
 echo
-printf "Writing EXIF metadata"
+printf "${GREEN}Writing EXIF metadata ${NC}"
 spinner &
 
 cd "$TARGET"
@@ -277,7 +282,7 @@ if [ ! -z "$location" ]; then
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
         echo
-        echo "ERROR: Photon is not reachable. Geotagging skipped."
+        echo "${RED}ERROR: Photon is not reachable. Geotagging skipped.${NC}"
         echo
 
     else
@@ -295,7 +300,7 @@ if [ ! -z "$location" ]; then
             lonref="W"
         fi
         echo
-        printf "Geotagging"
+        printf "${GREEN}Geotagging${NC} "
         echo
 
         exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
@@ -309,14 +314,14 @@ if [ ! -z "$gpx" ]; then
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
         echo
-        echo "No GPX files are found."
+        echo "${RED}No GPX files are found.${NC}"
         echo
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
         echo
-        printf "Geocorrelating"
+        printf "${GREEN}Geocorrelating${NC} "
         spinner &
 
         fgpx=$(ls "$gpx")
@@ -337,7 +342,7 @@ fi
 
 if [ ! -z "$process" ]; then
     echo
-    printf "Processing files"
+    printf "${GREEN}Processing files${NC} "
     spinner &
     shopt -s nocaseglob
     for file in *.jpg; do
@@ -349,7 +354,7 @@ if [ ! -z "$process" ]; then
 fi
 
 echo
-printf "Organizing files"
+printf "${GREEN}Organizing files${NC} "
 spinner &
 
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
