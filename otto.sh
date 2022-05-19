@@ -27,7 +27,7 @@ fi
 # Spinner
 spinner() {
     local i sp n
-    sp='/-\|'
+    sp='⣾⣽⣻⢿⡿⣟⣯⣷'
     n=${#sp}
     printf ' '
     while sleep 0.1; do
@@ -88,8 +88,9 @@ echo '               ~'
 echo '            o{°_°}o'
 echo '             /(.)~[*O]'
 echo '              / \'
-echo '         ---------------='
+echo '         ----------------'
 echo "         Hello! I'm Otto."
+echo '         ----------------'
 echo ''
 
 CONFIG="$HOME/.otto.cfg"
@@ -165,6 +166,9 @@ fi
 
 source "$CONFIG"
 
+# Hide cursor
+tput civis
+
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     usage
@@ -173,7 +177,7 @@ fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
     echo
-    echo "ERROR: Is the storage device mounted?"
+    printf "ERROR: Is the storage device mounted?"
     exit 1
 fi
 
@@ -209,13 +213,14 @@ fi
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
     echo
-    echo "Transferring files "
-    echo "---"
+    printf "Transferring files "
     spinner &
 
     rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
 
     kill "$!"
+    # Show cursor
+    tput cnorm
     notify
     exit 1
 fi
@@ -226,8 +231,7 @@ if [ -z "$keywords" ]; then
 fi
 
 echo
-echo "Transferring and renaming files"
-echo "---"
+printf "Transferring and renaming files"
 spinner &
 
 cd "$src"
@@ -236,8 +240,7 @@ exiftool -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tm
 kill "$!"
 
 echo
-echo "Writing EXIF metadata"
-echo "---"
+printf "Writing EXIF metadata"
 spinner &
 
 cd "$TARGET"
@@ -250,7 +253,7 @@ for file in *.*; do
         note="$text"
     elif [ ! -z "$REMOTE_SERVER" ]; then
         if [ ! -f "$HOME/$wf" ]; then
-            sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME"
+            sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME" >>"/tmp/otto.log" 2>&1
         fi
         if [ -f "$HOME/$wf" ]; then
             note=$(<"$HOME/$wf")
@@ -258,7 +261,7 @@ for file in *.*; do
     else
         note=""
     fi
-    
+
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
@@ -274,7 +277,7 @@ if [ ! -z "$location" ]; then
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
         echo
-        echo "Photon is not reachable. Geotagging skipped."
+        echo "ERROR: Photon is not reachable. Geotagging skipped."
         echo
 
     else
@@ -292,7 +295,7 @@ if [ ! -z "$location" ]; then
             lonref="W"
         fi
         echo
-        echo "Geotagging"
+        printf "Geotagging"
         echo
 
         exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
@@ -313,8 +316,7 @@ if [ ! -z "$gpx" ]; then
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
         echo
-        echo "Geocorrelating"
-        echo "---"
+        printf "Geocorrelating"
         spinner &
 
         fgpx=$(ls "$gpx")
@@ -335,8 +337,7 @@ fi
 
 if [ ! -z "$process" ]; then
     echo
-    echo "Processing files"
-    echo "---"
+    printf "Processing files"
     spinner &
     shopt -s nocaseglob
     for file in *.jpg; do
@@ -348,12 +349,15 @@ if [ ! -z "$process" ]; then
 fi
 
 echo
-echo "Organizing files"
-echo "---"
+printf "Organizing files"
 spinner &
 
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
 
 kill "$!"
+
+# Show cursor
+tput cnorm
+
 notify
