@@ -44,7 +44,7 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -n "This is note" -k "keyword1, keyword2, keyword3" -p <file>
+  $0 -d <dir> -g <location> -c <dir> -b -t "This is text" -k "keyword1, keyword2, keyword3" -p <file>
   
 OPTIONS:
 --------
@@ -52,7 +52,7 @@ OPTIONS:
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files
   -b Perform backup only
-  -n Write the specificed text into the Comment field on EXIF medata
+  -t Write the specificed text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
   -p Apply the specified Hald CLUT file and sharpening to all JPEG files
 
@@ -62,7 +62,7 @@ EXAMPLES:
   $0 -d /media/$USER/sdcard -b (back up RAW and JPEG files without any changes)
   $0 -d /media/$USER/sdcard -g Tokyo (back up and geotag RAW and JPEG files using the specified city)
   $0 -d /media/$USER/sdcard -c /home/$USER/gpx (import, geocorrelate, and organize RAW and JPEG files)
-  $0 -d /media/$USER/sdcard -n "Evening walk around Tokyo" -k "streets, nightscapes, japan" (import and organize geotagged RAW and JPEG files. Add the specified note and keywords to each file)
+  $0 -d /media/$USER/sdcard -t "Evening walk around Tokyo" -k "streets, nightscapes, japan" (import and organize geotagged RAW and JPEG files. Add the specified text and keywords to each file)
   $0 -d /media/$USER/sdcard -p /home/$USER/hald-clut.png (import and organize geotagged RAW and JPEG files. Apply the specified Hald CLUT preset to each file)
 EOF
     exit 1
@@ -80,7 +80,7 @@ echo ''
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bn:k:p:" opt; do
+while getopts "d:g:c:bt:k:p:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -94,8 +94,8 @@ while getopts "d:g:c:bn:k:p:" opt; do
     b)
         backup=1
         ;;
-    n)
-        note=$OPTARG
+    t)
+        text=$OPTARG
         ;;
     k)
         keywords=$OPTARG
@@ -166,32 +166,8 @@ if [ -f "/tmp/otto.log" ]; then
     rm "/tmp/otto.log"
 fi
 
-# If -b parameter specified, perform a simple backup
-if [ ! -z "$backup" ]; then
-    echo
-    echo "Transferring files "
-    echo "---"
-    spinner &
-
-    mkdir -p "$TARGET"
-    rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
-
-    kill "$!"
-
-    if [ ! -z "$NTFY_TOPIC" ]; then
-        curl \
-            -d "I'm done. Have a nice day!" \
-            -H "Title: Message from Otto" \
-            -H "Tags: monkey" \
-            "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
-    else
-        echo
-        echo "All done. Have a nice day!"
-        echo
-    fi
-    exit 1
-fi
-
+# Create the target directory
+# If the directory exists, prompt to empty it
 mkdir -p "$TARGET"
 if [ "$(ls -A $TARGET)" ]; then
     dialog --clear \
@@ -215,7 +191,32 @@ if [ "$(ls -A $TARGET)" ]; then
     esac
 fi
 
-# Check whether keywords are provided
+# If -b parameter specified, perform a simple backup
+if [ ! -z "$backup" ]; then
+    echo
+    echo "Transferring files "
+    echo "---"
+    spinner &
+
+    rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
+
+    kill "$!"
+
+    if [ ! -z "$NTFY_TOPIC" ]; then
+        curl \
+            -d "I'm done. Have a nice day!" \
+            -H "Title: Message from Otto" \
+            -H "Tags: monkey" \
+            "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
+    else
+        echo
+        echo "All done. Have a nice day!"
+        echo
+    fi
+    exit 1
+fi
+
+# Check whether keywords are specified
 if [ -z "$keywords" ]; then
     keywords=""
 fi
@@ -237,21 +238,21 @@ spinner &
 
 cd "$TARGET"
 
-# Obtain and write copyright camera model, lens, and notes
+# Obtain and write copyright camera model, lens, and note
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
-    if [ ! -z "$note" ]; then
-        notes="$note"
+    if [ ! -z "$text" ]; then
+        note="$text"
     elif [ ! -z "$REMOTE_SERVER" ]; then
         if [ ! -f "$HOME/$wf" ]; then
             sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME"
         fi
         if [ -f "$HOME/$wf" ]; then
-            notes=$(<"$HOME/$wf")
+            note=$(<"$HOME/$wf")
         fi
     else
-        notes=""
+        note=""
     fi
 
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
@@ -259,7 +260,7 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $notes" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
+    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
 done
 
 kill "$!"
