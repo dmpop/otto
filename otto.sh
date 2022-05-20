@@ -24,22 +24,6 @@ if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x 
     exit 1
 fi
 
-# define colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-
-# Spinner
-spinner() {
-    local i sp n
-    sp='⣾⣽⣻⢿⡿⣟⣯⣷'
-    n=${#sp}
-    printf ' '
-    while sleep 0.1; do
-        printf "%s\b" "${sp:i++%n:1}"
-    done
-}
-
 # Usage prompt
 usage() {
     cat <<EOF
@@ -60,15 +44,6 @@ OPTIONS:
   -t Write the specificed text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
   -p Apply the specified Hald CLUT file and sharpening to all JPEG files
-
-EXAMPLES:
----------
-  $0 -d /media/$USER/sdcard (import and organize geotagged RAW and JPEG files)
-  $0 -d /media/$USER/sdcard -b (back up RAW and JPEG files without any changes)
-  $0 -d /media/$USER/sdcard -g Tokyo (back up and geotag RAW and JPEG files using the specified city)
-  $0 -d /media/$USER/sdcard -c /home/$USER/gpx (import, geocorrelate, and organize RAW and JPEG files)
-  $0 -d /media/$USER/sdcard -t "Evening walk around Tokyo" -k "streets, nightscapes, japan" (import and organize geotagged RAW and JPEG files. Add the specified text and keywords to each file)
-  $0 -d /media/$USER/sdcard -p /home/$USER/hald-clut.png (import and organize geotagged RAW and JPEG files. Apply the specified Hald CLUT preset to each file)
 EOF
     exit 1
 }
@@ -82,21 +57,14 @@ function notify() {
             -H "Tags: monkey" \
             "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
     else
-        echo
-        echo "All done. Have a nice day!"
-        echo
+        clear
+        dialog --clear --title "Success" --backtitle "OTTO" --msgbox "\nAll done. Have a nice day!" 7 30
     fi
 }
 
-echo ''
-echo '               ~'
-echo '            o{°_°}o'
-echo '             /(.)~[*O]'
-echo '              / \'
-echo '         ----------------'
-echo "         Hello! I'm Otto."
-echo '         ----------------'
-echo ''
+clear
+dialog --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n   ----------------\n   Hello! I'm Otto.\n   ----------------" 11 26
+clear
 
 CONFIG="$HOME/.otto.cfg"
 
@@ -171,9 +139,6 @@ fi
 
 source "$CONFIG"
 
-# Hide cursor
-tput civis
-
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     usage
@@ -181,8 +146,8 @@ if [ -z "$src" ]; then
 fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
-    echo
-    printf "${RED}ERROR: Is the storage device mounted?${NC}"
+    clear
+    dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nSource directory is empty. The process stopped." 7 51
     exit 1
 fi
 
@@ -195,8 +160,8 @@ fi
 mkdir -p "$TARGET"
 if [ "$(ls -A $TARGET)" ]; then
     dialog --clear \
-        --title "Non-empty directory" \
-        --backtitle "Otto" \
+        --title "OTTO" \
+        --backtitle "OTTO" \
         --yesno "The target directory is not empty. Do you want to empty it?" 7 65
 
     response=$?
@@ -207,9 +172,13 @@ if [ "$(ls -A $TARGET)" ]; then
         mkdir -p "$TARGET"
         ;;
     1)
+        dialog --clear --title "Status" --backtitle "OTTO" --msgbox "The process has been stopped. No changes were made." 5 55
+        clear
         exit 1
         ;;
     255)
+        dialog --clear --title "Status" --backtitle "OTTO" --msgbox "The process has been stopped. No changes were made." 5 55
+        clear
         exit 1
         ;;
     esac
@@ -217,15 +186,10 @@ fi
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
-    echo
-    printf "${GREEN}Transferring files${NC} "
-    spinner &
-
+    clear
+    dialog --title "OTTO" --infobox "\nTransferring files..." 5 25
     rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
-
-    kill "$!"
-    # Show cursor
-    tput cnorm
+    clear
     notify
     exit 1
 fi
@@ -235,21 +199,14 @@ if [ -z "$keywords" ]; then
     keywords=""
 fi
 
-echo
-printf "${GREEN}Transferring and renaming files${NC} "
-spinner &
-
+clear
+dialog --title "OTTO" --infobox "\nTransferring and renaming files..." 5 38
 cd "$src"
 exiftool -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
-kill "$!"
-
-echo
-printf "${GREEN}Writing EXIF metadata ${NC}"
-spinner &
-
+clear
+dialog --title "OTTO" --infobox "\nWriting EXIF metadata..." 5 28
 cd "$TARGET"
-
 # Obtain and write copyright camera model, lens, and note
 for file in *.*; do
     date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
@@ -266,7 +223,6 @@ for file in *.*; do
     else
         note=""
     fi
-
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
@@ -275,16 +231,13 @@ for file in *.*; do
     exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
 done
 
-kill "$!"
-
+# Geotag files
 if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
-        echo
-        echo "${RED}ERROR: Photon is not reachable. Geotagging skipped.${NC}"
-        echo
-
+        clear
+        dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nPhoton is not reachable. Geotagging skipped." 7 48
     else
         # Obtain latitude and longitude for the specified location
         lat=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
@@ -299,10 +252,8 @@ if [ ! -z "$location" ]; then
         else
             lonref="W"
         fi
-        echo
-        printf "${GREEN}Geotagging${NC} "
-        echo
-
+        clear
+        dialog --title "OTTO" --infobox "\nGeotagging..." 5 17
         exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
     fi
 fi
@@ -313,17 +264,14 @@ if [ ! -z "$gpx" ]; then
     fcount=$(ls -1 | wc -l)
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
-        echo
-        echo "${RED}No GPX files are found.${NC}"
-        echo
+        clear
+        dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nNo GPX files are found." 7 27
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
-        echo
-        printf "${GREEN}Geocorrelating${NC} "
-        spinner &
-
+        clear
+        dialog --title "OTTO" --infobox "\nGeocorrelating..." 5 21
         fgpx=$(ls "$gpx")
         exiftool -overwrite_original -geotag "$fgpx" -geosync=180 . >>"/tmp/otto.log" 2>&1
     fi
@@ -337,32 +285,22 @@ if [ ! -z "$gpx" ]; then
         fgpx=$(pwd)"/merged.gpx"
         exiftool -overwrite_original -geotag "$fgpx" -geosync=180 .
     fi
-    kill "$!"
 fi
 
 if [ ! -z "$process" ]; then
-    echo
-    printf "${GREEN}Processing files${NC} "
-    spinner &
+    clear
+    dialog --title "OTTO" --infobox "\nProcessing files..." 5 23
     shopt -s nocaseglob
     for file in *.jpg; do
         filename=${file%.*}
         convert "$file" "$process" -hald-clut "$filename-0.jpeg"
         mogrify -sharpen 0x2 "$filename-0.jpeg"
     done
-    kill "$!"
 fi
 
-echo
-printf "${GREEN}Organizing files${NC} "
-spinner &
-
+clear
+dialog --title "OTTO" --infobox "\nOrganizing files..." 5 23
 exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
-
-kill "$!"
-
-# Show cursor
-tput cnorm
-
+clear
 notify
