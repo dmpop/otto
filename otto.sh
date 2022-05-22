@@ -59,6 +59,7 @@ function notify() {
     else
         clear
         dialog --clear --title "Success" --backtitle "OTTO" --msgbox "\nAll done. Have a nice day!" 7 30
+        clear
     fi
 }
 
@@ -202,14 +203,14 @@ fi
 clear
 dialog --title "OTTO" --infobox "\nTransferring and renaming files..." 5 38
 cd "$src"
-exiftool -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
+exiftool -q -q -m -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
 clear
 dialog --title "OTTO" --infobox "\nWriting EXIF metadata..." 5 28
 cd "$TARGET"
 # Obtain and write copyright camera model, lens, and note
 for file in *.*; do
-    date=$(exiftool -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
+    date=$(exiftool -q -q -m -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
     wf=$date".txt"
     if [ ! -z "$text" ]; then
         note="$text"
@@ -224,11 +225,11 @@ for file in *.*; do
         note=""
     fi
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
-    lens=$(exiftool -LensID "$file" | cut -d":" -f2)
+    lens=$(exiftool -q -q -m -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
-        lens=$(exiftool -LensModel "$file" | cut -d":" -f2)
+        lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
+    exiftool -q -q -m -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
 done
 
 # Geotag files
@@ -254,7 +255,7 @@ if [ ! -z "$location" ]; then
         fi
         clear
         dialog --title "OTTO" --infobox "\nGeotagging..." 5 17
-        exiftool -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
+        exiftool -q -q -m -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
     fi
 fi
 
@@ -273,7 +274,7 @@ if [ ! -z "$gpx" ]; then
         clear
         dialog --title "OTTO" --infobox "\nGeocorrelating..." 5 21
         fgpx=$(ls "$gpx")
-        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 . >>"/tmp/otto.log" 2>&1
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 . >>"/tmp/otto.log" 2>&1
     fi
     if [ "$fcount" -gt "1" ]; then
         cd "$gpx"
@@ -283,7 +284,7 @@ if [ ! -z "$gpx" ]; then
         done
         gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
         fgpx=$(pwd)"/merged.gpx"
-        exiftool -overwrite_original -geotag "$fgpx" -geosync=180 .
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 .
     fi
 fi
 
@@ -300,7 +301,7 @@ fi
 
 clear
 dialog --title "OTTO" --infobox "\nOrganizing files..." 5 23
-exiftool '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
+exiftool -q -q -m '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
 clear
 notify
