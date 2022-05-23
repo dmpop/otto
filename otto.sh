@@ -163,7 +163,7 @@ if [ "$(ls -A $TARGET)" ]; then
     dialog --clear \
         --title "OTTO" \
         --backtitle "OTTO" \
-        --yesno "The target directory is not empty. Do you want to empty it?" 7 65
+        --yesno "\nThe target directory is not empty. Do you want to empty it?" 7 63
 
     response=$?
     case $response in
