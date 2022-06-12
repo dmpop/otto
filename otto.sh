@@ -146,9 +146,18 @@ if [ -z "$src" ]; then
     exit 1
 fi
 
+# Check whether the source directory exists
+if [ ! -d "$src" ]; then
+    clear
+    dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nSource directory not found. The process stopped." 7 51
+    clear
+    exit 1
+fi
+
 if [ -z '$(ls -A "'$src'")' ]; then
     clear
     dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nSource directory is empty. The process stopped." 7 51
+    clear
     exit 1
 fi
 
@@ -159,6 +168,17 @@ fi
 # Create the target directory
 # If the directory exists, prompt to empty it
 mkdir -p "$TARGET"
+
+# If -b parameter specified, perform a simple backup
+if [ ! -z "$backup" ]; then
+    clear
+    dialog --title "OTTO" --infobox "\nTransferring files..." 5 25
+    rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
+    clear
+    notify
+    exit 1
+fi
+
 if [ "$(ls -A $TARGET)" ]; then
     dialog --clear \
         --title "OTTO" \
@@ -183,16 +203,6 @@ if [ "$(ls -A $TARGET)" ]; then
         exit 1
         ;;
     esac
-fi
-
-# If -b parameter specified, perform a simple backup
-if [ ! -z "$backup" ]; then
-    clear
-    dialog --title "OTTO" --infobox "\nTransferring files..." 5 25
-    rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
-    clear
-    notify
-    exit 1
 fi
 
 # Check whether keywords are specified
@@ -267,6 +277,7 @@ if [ ! -z "$gpx" ]; then
     if [ "$fcount" -eq "0" ]; then
         clear
         dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nNo GPX files are found." 7 27
+        clear
         exit 1
     fi
     # Geocorrelate with a single GPX file
