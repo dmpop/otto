@@ -285,7 +285,7 @@ if [ ! -z "$gpx" ]; then
         clear
         dialog --title "OTTO" --infobox "\nGeocorrelating..." 5 21
         fgpx=$(ls "$gpx")
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 . >>"/tmp/otto.log" 2>&1
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$TARGET" >>"/tmp/otto.log" 2>&1
     fi
     if [ "$fcount" -gt "1" ]; then
         cd "$gpx"
@@ -295,7 +295,7 @@ if [ ! -z "$gpx" ]; then
         done
         gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
         fgpx=$(pwd)"/merged.gpx"
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 .
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$TARGET"
     fi
 fi
 
@@ -312,6 +312,7 @@ fi
 
 clear
 dialog --title "OTTO" --infobox "\nOrganizing files..." 5 23
+cd "$TARGET"
 exiftool -q -q -m '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
 clear
