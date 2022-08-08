@@ -136,8 +136,6 @@ fi
 
 source "$CONFIG"
 
-timestamp=$(date +%Y%m%d-%H%M)
-
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     usage
@@ -164,7 +162,8 @@ if [ -f "/tmp/otto.log" ]; then
 fi
 
 # Create the destionation directory
-ENDPOINT = "$DESTINATION/$timestamp"
+srcdir=$(basename "$src")
+ENDPOINT="$DESTINATION-$srcdir"
 mkdir -p "$ENDPOINT"
 
 # If -b parameter specified, perform a simple backup
