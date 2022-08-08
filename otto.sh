@@ -33,7 +33,7 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -t "This is text" -k "keyword1, keyword2, keyword3" -p <file>
+  $0 -d <dir> -g <location> -c <dir> -b -t "This is text" -k "keyword1, keyword2, keyword3"
   
 OPTIONS:
 --------
@@ -43,7 +43,6 @@ OPTIONS:
   -b Perform backup only
   -t Write the specificed text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
-  -p Apply the specified Hald CLUT file and sharpening to all JPEG files
 EOF
     exit 1
 }
@@ -89,9 +88,6 @@ while getopts "d:g:c:bt:k:p:" opt; do
         ;;
     k)
         keywords=$OPTARG
-        ;;
-    p)
-        process=$OPTARG
         ;;
     \?)
         usage
@@ -297,17 +293,6 @@ if [ ! -z "$gpx" ]; then
         fgpx=$(pwd)"/merged.gpx"
         exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$TARGET"
     fi
-fi
-
-if [ ! -z "$process" ]; then
-    clear
-    dialog --title "OTTO" --infobox "\nProcessing files..." 5 23
-    shopt -s nocaseglob
-    for file in *.jpg; do
-        filename=${file%.*}
-        convert "$file" "$process" -hald-clut "$filename-0.jpeg"
-        mogrify -sharpen 0x2 "$filename-0.jpeg"
-    done
 fi
 
 clear
