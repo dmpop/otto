@@ -100,7 +100,7 @@ shift $((OPTIND - 1))
 if [ ! -f "$CONFIG" ]; then
     dialog --title "Otto configuration" \
         --form "\n          Specify the required settings" 16 56 8 \
-        " Target directory:" 1 4 "/home/user/OTTO" 1 23 25 512 \
+        "      Destination:" 1 4 "/home/user/OTTO" 1 23 25 512 \
         " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
         "      ntfy server:" 3 4 "ntfy.sh" 3 23 25 512 \
         "       ntfy topic:" 4 4 "unique-string" 4 23 25 512 \
@@ -111,7 +111,7 @@ if [ ! -f "$CONFIG" ]; then
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
-        target=$(sed -n 1p /tmp/dialog.tmp)
+        destination=$(sed -n 1p /tmp/dialog.tmp)
         copyright=$(sed -n 2p /tmp/dialog.tmp)
         ntfy_server=$(sed -n 3p /tmp/dialog.tmp)
         ntfy_topic=$(sed -n 4p /tmp/dialog.tmp)
@@ -119,7 +119,7 @@ if [ ! -f "$CONFIG" ]; then
         path=$(sed -n 6p /tmp/dialog.tmp)
         user=$(sed -n 7p /tmp/dialog.tmp)
         password=$(sed -n 8p /tmp/dialog.tmp)
-        echo "TARGET='$target'" >>"$CONFIG"
+        echo "DESTINATION='$destination'" >>"$CONFIG"
         echo "COPYRIGHT='$copyright'" >>"$CONFIG"
         echo "NTFY_SERVER='$ntfy_server'" >>"$CONFIG"
         echo "NTFY_TOPIC='$ntfy_topic'" >>"$CONFIG"
@@ -135,6 +135,8 @@ if [ ! -f "$CONFIG" ]; then
 fi
 
 source "$CONFIG"
+
+timestamp=$(date +%Y%m%d-%H%M)
 
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
@@ -161,44 +163,18 @@ if [ -f "/tmp/otto.log" ]; then
     rm "/tmp/otto.log"
 fi
 
-# Create the target directory
-# If the directory exists, prompt to empty it
-mkdir -p "$TARGET"
+# Create the destionation directory
+ENDPOINT = "$DESTINATION/$timestamp"
+mkdir -p "$ENDPOINT"
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
     clear
     dialog --title "OTTO" --infobox "\nTransferring files..." 5 25
-    rsync -avh "$src" "$TARGET" >>"/tmp/otto.log" 2>&1
+    rsync -avh "$src" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     clear
     notify
     exit 1
-fi
-
-if [ "$(ls -A $TARGET)" ]; then
-    dialog --clear \
-        --title "OTTO" \
-        --backtitle "OTTO" \
-        --yesno "\nThe target directory is not empty. Do you want to empty it?" 7 63
-
-    response=$?
-    case $response in
-    0)
-        clear
-        rm -rf "$TARGET"
-        mkdir -p "$TARGET"
-        ;;
-    1)
-        dialog --clear --title "Status" --backtitle "OTTO" --msgbox "The process has been stopped. No changes were made." 5 55
-        clear
-        exit 1
-        ;;
-    255)
-        dialog --clear --title "Status" --backtitle "OTTO" --msgbox "The process has been stopped. No changes were made." 5 55
-        clear
-        exit 1
-        ;;
-    esac
 fi
 
 # Check whether keywords are specified
@@ -209,11 +185,11 @@ fi
 clear
 dialog --title "OTTO" --infobox "\nTransferring and renaming files..." 5 38
 cd "$src"
-exiftool -q -q -m -r -o "$TARGET" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
+exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
 clear
 dialog --title "OTTO" --infobox "\nWriting EXIF metadata..." 5 28
-cd "$TARGET"
+cd "$ENDPOINT"
 # Obtain and write copyright camera model, lens, and note
 for file in *.*; do
     date=$(exiftool -q -q -m -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
@@ -281,7 +257,7 @@ if [ ! -z "$gpx" ]; then
         clear
         dialog --title "OTTO" --infobox "\nGeocorrelating..." 5 21
         fgpx=$(ls "$gpx")
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$TARGET" >>"/tmp/otto.log" 2>&1
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     fi
     if [ "$fcount" -gt "1" ]; then
         cd "$gpx"
@@ -291,13 +267,13 @@ if [ ! -z "$gpx" ]; then
         done
         gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
         fgpx=$(pwd)"/merged.gpx"
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$TARGET"
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT"
     fi
 fi
 
 clear
 dialog --title "OTTO" --infobox "\nOrganizing files..." 5 23
-cd "$TARGET"
+cd "$ENDPOINT"
 exiftool -q -q -m '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
 clear
