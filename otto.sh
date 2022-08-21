@@ -136,6 +136,8 @@ fi
 
 source "$CONFIG"
 
+srcdir=$(basename "$src")
+
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     usage
@@ -162,15 +164,14 @@ if [ -f "/tmp/otto.log" ]; then
 fi
 
 # Create the destionation directory
-srcdir=$(basename "$src")
-ENDPOINT="$DESTINATION-$srcdir"
+ENDPOINT="$DESTINATION/$srcdir"
 mkdir -p "$ENDPOINT"
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
     clear
     dialog --title "OTTO" --infobox "\nTransferring files..." 5 25
-    rsync -avh "$src" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+    rsync -avh "$src/" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     clear
     notify
     exit 1
