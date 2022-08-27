@@ -56,15 +56,9 @@ function notify() {
             -H "Tags: monkey" \
             "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
     else
-        clear
-        dialog --clear --title "Success" --backtitle "OTTO" --msgbox "\nAll done. Have a nice day!" 7 30
-        clear
+        dialog --erase-on-exit --title "Success" --backtitle "OTTO" --msgbox "\nAll done. Have a nice day!" 7 30
     fi
 }
-
-clear
-dialog --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n   ----------------\n   Hello! I'm Otto.\n   ----------------" 11 26
-clear
 
 CONFIG="$HOME/.otto.cfg"
 
@@ -98,7 +92,7 @@ shift $((OPTIND - 1))
 
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
-    dialog --title "Otto configuration" \
+    dialog --erase-on-exit --title "Otto configuration" \
         --form "\n          Specify the required settings" 16 56 8 \
         "      Destination:" 1 4 "/home/user/OTTO" 1 23 25 512 \
         " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
@@ -136,8 +130,6 @@ fi
 
 source "$CONFIG"
 
-srcdir=$(basename "$src")
-
 # Check whether the path to the source directory is specified
 if [ -z "$src" ]; then
     usage
@@ -146,16 +138,12 @@ fi
 
 # Check whether the source directory exists
 if [ ! -d "$src" ]; then
-    clear
-    dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nSource directory not found. The process stopped." 7 51
-    clear
+    dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nSource directory not found. I quit.\n----------------------" 12 26
     exit 1
 fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
-    clear
-    dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nSource directory is empty. The process stopped." 7 51
-    clear
+    dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nSource directory is empty. I quit.\n----------------------" 12 26
     exit 1
 fi
 
@@ -164,14 +152,14 @@ if [ -f "/tmp/otto.log" ]; then
 fi
 
 # Create the destionation directory
+srcdir=$(basename "$src")
 ENDPOINT="$DESTINATION/$srcdir"
 mkdir -p "$ENDPOINT"
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
-    clear
-    dialog --title "OTTO" --infobox "\nTransferring files..." 5 25
-    rsync -avh "$src/" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+    dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nTransferring files...\n----------------------" 9 26
+    rsync -avh "$src" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     clear
     notify
     exit 1
@@ -182,13 +170,11 @@ if [ -z "$keywords" ]; then
     keywords=""
 fi
 
-clear
-dialog --title "OTTO" --infobox "\nTransferring and renaming files..." 5 38
+dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nTransferring and renaming files...\n----------------------" 10 26
 cd "$src"
 exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
-clear
-dialog --title "OTTO" --infobox "\nWriting EXIF metadata..." 5 28
+dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nWriting EXIF metadata...\n----------------------" 10 26
 cd "$ENDPOINT"
 # Obtain and write copyright camera model, lens, and note
 for file in *.*; do
@@ -219,8 +205,7 @@ if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
-        clear
-        dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nPhoton is not reachable. Geotagging skipped." 7 48
+        dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nPhoton is not reachable. Geotagging skipped.\n----------------------" 13 26
     else
         # Obtain latitude and longitude for the specified location
         lat=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
@@ -235,8 +220,7 @@ if [ ! -z "$location" ]; then
         else
             lonref="W"
         fi
-        clear
-        dialog --title "OTTO" --infobox "\nGeotagging..." 5 17
+        dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nGeotagging...\n----------------------" 9 26
         exiftool -q -q -m -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
     fi
 fi
@@ -247,15 +231,12 @@ if [ ! -z "$gpx" ]; then
     fcount=$(ls -1 | wc -l)
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
-        clear
-        dialog --clear --title "Error" --backtitle "OTTO" --msgbox "\nNo GPX files are found." 7 27
-        clear
+        dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nNo GPX files found.\n----------------------" 11 26
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
-        clear
-        dialog --title "OTTO" --infobox "\nGeocorrelating..." 5 21
+        dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nGeocorrelating...\n----------------------" 9 26
         fgpx=$(ls "$gpx")
         exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     fi
@@ -271,8 +252,7 @@ if [ ! -z "$gpx" ]; then
     fi
 fi
 
-clear
-dialog --title "OTTO" --infobox "\nOrganizing files..." 5 23
+dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nOrganizing files...\n----------------------" 9 26
 cd "$ENDPOINT"
 exiftool -q -q -m '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
