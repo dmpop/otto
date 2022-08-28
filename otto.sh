@@ -49,14 +49,13 @@ EOF
 
 # Notification function
 function notify() {
+    dialog --erase-on-exit --title "OTTO" --msgbox "            ~\n         o{°_°}o\n          /(.)~[*O]\n           / \\\n--------------------------\nAll done! Have a nice day.\n--------------------------" 11 30
     if [ ! -z "$NTFY_TOPIC" ]; then
         curl \
             -d "I'm done. Have a nice day!" \
             -H "Title: Message from Otto" \
             -H "Tags: monkey" \
             "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
-    else
-        dialog --erase-on-exit --title "Success" --backtitle "OTTO" --msgbox "\nAll done. Have a nice day!" 7 30
     fi
 }
 
@@ -138,12 +137,12 @@ fi
 
 # Check whether the source directory exists
 if [ ! -d "$src" ]; then
-    dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nSource directory not found. I quit.\n----------------------" 12 26
+    dialog --erase-on-exit --backtitle "ERROR" --msgbox "Source directory not found." 5 31
     exit 1
 fi
 
 if [ -z '$(ls -A "'$src'")' ]; then
-    dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nSource directory is empty. I quit.\n----------------------" 12 26
+    dialog --erase-on-exit --backtitle "ERROR" --msgbox "Source directory is empty." 5 31
     exit 1
 fi
 
@@ -158,7 +157,7 @@ mkdir -p "$ENDPOINT"
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
-    dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nTransferring files...\n----------------------" 9 26
+    dialog --infobox "Transferring files..." 3 26
     rsync -avh "$src" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     clear
     notify
@@ -170,11 +169,11 @@ if [ -z "$keywords" ]; then
     keywords=""
 fi
 
-dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nTransferring and renaming files...\n----------------------" 10 26
+dialog --infobox "Transferring and renaming files..." 3 39
 cd "$src"
 exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 
-dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nWriting EXIF metadata...\n----------------------" 10 26
+dialog --infobox "Writing EXIF metadata..." 3 28
 cd "$ENDPOINT"
 # Obtain and write copyright camera model, lens, and note
 for file in *.*; do
@@ -205,7 +204,7 @@ if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
     check=$(wget -q --spider https://photon.komoot.io/)
     if [ ! -z "$check" ]; then
-        dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nPhoton is not reachable. Geotagging skipped.\n----------------------" 13 26
+        dialog --erase-on-exit --backtitle "ERROR" --msgbox "Photon is not reachable. Geotagging skipped." 6 28
     else
         # Obtain latitude and longitude for the specified location
         lat=$(curl -k "https://photon.komoot.io/api/?q=$location" | jq '.features | .[0] | .geometry | .coordinates | .[1]')
@@ -220,7 +219,7 @@ if [ ! -z "$location" ]; then
         else
             lonref="W"
         fi
-        dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nGeotagging...\n----------------------" 9 26
+        dialog --infobox "Geotagging..." 3 17
         exiftool -q -q -m -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref . >>"/tmp/otto.log" 2>&1
     fi
 fi
@@ -231,12 +230,12 @@ if [ ! -z "$gpx" ]; then
     fcount=$(ls -1 | wc -l)
     # Check for GPX files and GPSBabel
     if [ "$fcount" -eq "0" ]; then
-        dialog --erase-on-exit --title "OTTO" --msgbox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nNo GPX files found.\n----------------------" 11 26
+        dialog --erase-on-exit --backtitle "ERROR" --msgbox "No GPX files found." 5 23
         exit 1
     fi
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
-        dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nGeocorrelating...\n----------------------" 9 26
+        dialog --infobox "Geocorrelating..." 3 21
         fgpx=$(ls "$gpx")
         exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     fi
@@ -252,7 +251,7 @@ if [ ! -z "$gpx" ]; then
     fi
 fi
 
-dialog --title "OTTO" --infobox "          ~\n       o{°_°}o\n        /(.)~[*O]\n         / \\\n----------------------\nOrganizing files...\n----------------------" 9 26
+dialog --infobox "Organizing files..." 3 23
 cd "$ENDPOINT"
 exiftool -q -q -m '-Directory<CreateDate' -d ./%Y-%m-%d . >>"/tmp/otto.log" 2>&1
 cd
