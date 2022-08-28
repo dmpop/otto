@@ -41,7 +41,7 @@ OPTIONS:
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files
   -b Perform backup only
-  -t Write the specificed text into the Comment field on EXIF medata
+  -t Write the specified text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
 EOF
     exit 1
@@ -62,7 +62,7 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bt:k:p:" opt; do
+while getopts "d:g:c:bt:k:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -197,6 +197,7 @@ for file in *.*; do
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
     exiftool -q -q -m -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
+    rm "$HOME/$wf"
 done
 
 # Geotag files
@@ -247,7 +248,7 @@ if [ ! -z "$gpx" ]; then
         done
         gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
         fgpx=$(pwd)"/merged.gpx"
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT"
+        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     fi
 fi
 
