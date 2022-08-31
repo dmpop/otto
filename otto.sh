@@ -182,11 +182,9 @@ for file in *.*; do
     if [ ! -z "$text" ]; then
         note="$text"
     elif [ ! -z "$REMOTE_SERVER" ]; then
-        if [ ! -f "$HOME/$wf" ]; then
-            sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "$HOME" >>"/tmp/otto.log" 2>&1
-        fi
-        if [ -f "$HOME/$wf" ]; then
-            note=$(<"$HOME/$wf")
+        sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "/tmp/" >>"/tmp/otto.log" 2>&1
+        if [ -f "/tmp/$wf" ]; then
+            note=$(<"/tmp/$wf")
         fi
     else
         note=""
@@ -197,7 +195,6 @@ for file in *.*; do
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
     exiftool -q -q -m -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
-    rm "$HOME/$wf"
 done
 
 # Geotag files
