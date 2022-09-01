@@ -234,8 +234,8 @@ if [ ! -z "$gpx" ]; then
     # Geocorrelate with a single GPX file
     if [ "$fcount" -eq "1" ]; then
         dialog --infobox "Geocorrelating..." 3 21
-        fgpx=$(ls "$gpx")
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+        track=$(ls "$gpx")
+        exiftool -q -q -m -overwrite_original -geotag "$track" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     fi
     if [ "$fcount" -gt "1" ]; then
         cd "$gpx"
@@ -243,9 +243,9 @@ if [ ! -z "$gpx" ]; then
         for f in *.gpx; do
             ff="$ff -f $f"
         done
-        gpsbabel -i gpx $ff -o gpx -F "merged.gpx"
-        fgpx=$(pwd)"/merged.gpx"
-        exiftool -q -q -m -overwrite_original -geotag "$fgpx" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+        gpsbabel -i gpx $ff -o gpx -F "/tmp/merged-track.gpx"
+        track="/tmp/merged-track.gpx"
+        exiftool -q -q -m -overwrite_original -geotag "$track" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     fi
 fi
 
