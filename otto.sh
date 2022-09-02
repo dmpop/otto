@@ -236,8 +236,7 @@ if [ ! -z "$gpx" ]; then
         dialog --infobox "Geocorrelating..." 3 21
         track=$(ls "$gpx")
         exiftool -q -q -m -overwrite_original -geotag "$track" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
-    fi
-    if [ "$fcount" -gt "1" ]; then
+    elif [ "$fcount" -gt "1" ]; then
         cd "$gpx"
         ff=""
         for f in *.gpx; do
@@ -246,6 +245,8 @@ if [ ! -z "$gpx" ]; then
         gpsbabel -i gpx $ff -o gpx -F "/tmp/merged-track.gpx"
         track="/tmp/merged-track.gpx"
         exiftool -q -q -m -overwrite_original -geotag "$track" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+    else
+        dialog --erase-on-exit --backtitle "ERROR" --msgbox "Something went wrong. Geotagging skipped." 6 25
     fi
 fi
 
