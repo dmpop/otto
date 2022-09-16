@@ -93,7 +93,7 @@ shift $((OPTIND - 1))
 if [ ! -f "$CONFIG" ]; then
     dialog --erase-on-exit --title "Otto configuration" \
         --form "\n          Specify the required settings" 16 56 8 \
-        "      Destination:" 1 4 "/home/user/OTTO" 1 23 25 512 \
+        "      Destination:" 1 4 "$HOME/OTTO" 1 23 25 512 \
         " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
         "      ntfy server:" 3 4 "ntfy.sh" 3 23 25 512 \
         "       ntfy topic:" 4 4 "unique-string" 4 23 25 512 \
@@ -108,19 +108,19 @@ if [ ! -f "$CONFIG" ]; then
         copyright=$(sed -n 2p /tmp/dialog.tmp)
         ntfy_server=$(sed -n 3p /tmp/dialog.tmp)
         ntfy_topic=$(sed -n 4p /tmp/dialog.tmp)
-        server=$(sed -n 5p /tmp/dialog.tmp)
-        path=$(sed -n 6p /tmp/dialog.tmp)
+        remote_server=$(sed -n 5p /tmp/dialog.tmp)
+        remote_path=$(sed -n 6p /tmp/dialog.tmp)
         user=$(sed -n 7p /tmp/dialog.tmp)
         password=$(sed -n 8p /tmp/dialog.tmp)
-        echo "DESTINATION='$destination'" >>"$CONFIG"
-        echo "COPYRIGHT='$copyright'" >>"$CONFIG"
-        echo "NTFY_SERVER='$ntfy_server'" >>"$CONFIG"
-        echo "NTFY_TOPIC='$ntfy_topic'" >>"$CONFIG"
-        echo "REMOTE_SERVER='$server'" >>"$CONFIG"
-        echo "REMOTE_PATH='$path'" >>"$CONFIG"
-        echo "USER='$user'" >>"$CONFIG"
-        echo "PASSWORD='$password'" >>"$CONFIG"
-        echo "DATE_FORMAT='%Y%m%d-%H%M%S%%-c.%%e'" >>"$CONFIG"
+        echo "DESTINATION=\"$destination\"" >>"$CONFIG"
+        echo "COPYRIGHT=\"$copyright\"" >>"$CONFIG"
+        echo "NTFY_SERVER=\"$ntfy_server\"" >>"$CONFIG"
+        echo "NTFY_TOPIC=\"$ntfy_topic\"" >>"$CONFIG"
+        echo "REMOTE_SERVER=\"$remote_server\"" >>"$CONFIG"
+        echo "REMOTE_PATH=\"$remote_path\"" >>"$CONFIG"
+        echo "USER=\"$user\"" >>"$CONFIG"
+        echo "PASSWORD=\"$password\"" >>"$CONFIG"
+        echo "DATE_FORMAT=\"%Y%m%d-%H%M%S%%-c.%%e\"" >>"$CONFIG"
         rm -f /tmp/dialog.tmp
     else
         exit 1
