@@ -99,7 +99,7 @@ if [ ! -f "$CONFIG" ]; then
         "       ntfy topic:" 4 4 "unique-string" 4 23 25 512 \
         "    Remote server:" 5 4 "hello.xyz" 5 23 25 512 \
         "      Remote path:" 6 4 "/var/www/html/data" 6 23 25 512 \
-        "            User:" 7 4 "Remote username" 7 23 25 512 \
+        "      Remote user:" 7 4 "Remote user name" 7 23 25 512 \
         "        Password:" 8 4 "Remote user password" 8 23 25 512 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
@@ -110,7 +110,7 @@ if [ ! -f "$CONFIG" ]; then
         ntfy_topic=$(sed -n 4p /tmp/dialog.tmp)
         remote_server=$(sed -n 5p /tmp/dialog.tmp)
         remote_path=$(sed -n 6p /tmp/dialog.tmp)
-        user=$(sed -n 7p /tmp/dialog.tmp)
+        remote_user=$(sed -n 7p /tmp/dialog.tmp)
         password=$(sed -n 8p /tmp/dialog.tmp)
         echo "DESTINATION=\"$destination\"" >>"$CONFIG"
         echo "COPYRIGHT=\"$copyright\"" >>"$CONFIG"
@@ -118,7 +118,7 @@ if [ ! -f "$CONFIG" ]; then
         echo "NTFY_TOPIC=\"$ntfy_topic\"" >>"$CONFIG"
         echo "REMOTE_SERVER=\"$remote_server\"" >>"$CONFIG"
         echo "REMOTE_PATH=\"$remote_path\"" >>"$CONFIG"
-        echo "USER=\"$user\"" >>"$CONFIG"
+        echo "REMOTE_USER=\"$remote_user\"" >>"$CONFIG"
         echo "PASSWORD=\"$password\"" >>"$CONFIG"
         echo "DATE_FORMAT=\"%Y%m%d-%H%M%S%%-c.%%e\"" >>"$CONFIG"
         rm -f /tmp/dialog.tmp
@@ -182,7 +182,7 @@ for file in *.*; do
     if [ ! -z "$text" ]; then
         note="$text"
     elif [ ! -z "$REMOTE_SERVER" ]; then
-        sshpass -p "$PASSWORD" rsync -ave ssh "$USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "/tmp/" >>"/tmp/otto.log" 2>&1
+        sshpass -p "$PASSWORD" rsync -ave ssh "$REMOTE_USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "/tmp/" >>"/tmp/otto.log" 2>&1
         if [ -f "/tmp/$wf" ]; then
             note=$(<"/tmp/$wf")
         fi
