@@ -18,7 +18,7 @@
 # Author: Dmitri Popov, dmpop@linux.com
 # Source code: https://github.com/dmpop/otto
 
-if [ -x "$(command -v apt)" ]; then
+if [ ! -x "$(command -v apt)" ]; then
         echo "Looks like it's not an Ubuntu- or Debian-based system."
         exit 1
 fi
@@ -30,27 +30,28 @@ fi
 
 cd
 
-mkdir -p $HOME/Android
-mkdir -p $HOME/iOS
-
 if [ ! -d "$HOME/bin" ]; then
         mkdir $HOME/bin
         echo 'export PATH='$HOME'/bin:$PATH' >>.bashrc
 fi
 
-sudo mkdir -p /etc/systemd/system/systemd-udevd.service.d
-sudo sh -c "echo '[Service]' > /etc/systemd/system/systemd-udevd.service.d/00-privatemounts-no.conf"
-sudo sh -c "echo 'PrivateMounts=no' >> /etc/systemd/system/systemd-udevd.service.d/00-privatemounts-no.conf"
-sudo systemctl daemon-reexec
-sudo service systemd-udevd restart
-
 sudo apt update
 sudo apt upgrade
-sudo apt install git dialog bc jq curl exiftool rsync sshpass gpsbabel screen usbmount libimobiledevice6 ifuse mtp-tools jmtpfs exfat-fuse exfat-utils
+sudo apt install git dialog bc jq curl exiftool rsync sshpass gpsbabel screen usbmount exfat-fuse exfat-utils
 git clone https://github.com/dmpop/otto.git
 cd otto
 cp otto.sh $HOME/bin/otto
 chmod +x $HOME/bin/otto
 cd
+sudo mv /etc/usbmount/usbmount.conf /etc/usbmount/usbmount.conf.bak
+sudo bash -c "cat > /etc/usbmount/usbmount.conf" << EOL
+ENABLED=1
+MOUNTPOINTS="/media/usb0 /media/usb1 /media/usb2 /media/usb3
+             /media/usb4 /media/usb5 /media/usb6 /media/usb7"
+FILESYSTEMS="vfat exfat ext2 ext3 ext4 hfsplus"
+MOUNTOPTIONS="sync,noexec,nodev,noatime,nodiratime,uid=1000,gid=1000"
+FS_MOUNTOPTIONS=" "
+VERBOSE=no
+EOL
 echo "All done. The system will reboot now."
 sudo reboot
