@@ -32,16 +32,9 @@ sudo apt update
 sudo apt upgrade -y
 
 cd
-if [ ! -d "$HOME/bin" ]; then
-        mkdir $HOME/bin
-        echo 'export PATH='$HOME'/bin:$PATH' >>.bashrc
-fi
 sudo apt install git dialog bc jq curl exiftool rsync sshpass gpsbabel screen usbmount exfat-fuse exfat-utils
 git clone https://github.com/dmpop/otto.git
-cd otto
-cp otto.sh $HOME/bin/otto
-chmod +x $HOME/bin/otto
-cd
+sudo ln -s $HOME/otto/otto.sh /usr/local/bin/otto
 sudo mv /etc/usbmount/usbmount.conf /etc/usbmount/usbmount.conf.bak
 sudo bash -c "cat > /etc/usbmount/usbmount.conf" << EOL
 ENABLED=1
