@@ -28,15 +28,14 @@ if [[ $EUID -eq 0 ]]; then
         exit 1
 fi
 
-cd
+sudo apt update
+sudo apt upgrade -y
 
+cd
 if [ ! -d "$HOME/bin" ]; then
         mkdir $HOME/bin
         echo 'export PATH='$HOME'/bin:$PATH' >>.bashrc
 fi
-
-sudo apt update
-sudo apt upgrade
 sudo apt install git dialog bc jq curl exiftool rsync sshpass gpsbabel screen usbmount exfat-fuse exfat-utils
 git clone https://github.com/dmpop/otto.git
 cd otto
@@ -53,5 +52,9 @@ MOUNTOPTIONS="sync,noexec,nodev,noatime,nodiratime,uid=1000,gid=1000"
 FS_MOUNTOPTIONS=" "
 VERBOSE=no
 EOL
+crontab -l | {
+        cat
+        echo "@reboot sudo /home/"$USER"/otto/ip.sh"
+        } | crontab
 echo "All done. The system will reboot now."
 sudo reboot
