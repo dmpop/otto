@@ -49,7 +49,6 @@ EOF
 
 # Notification function
 function notify() {
-    dialog --erase-on-exit --title "OTTO" --msgbox "            ~\n         o{°_°}o\n          /(.)~[*O]\n           / \\\n--------------------------\nAll done! Have a nice day.\n--------------------------" 11 30
     if [ ! -z "$NTFY_TOPIC" ]; then
         curl \
             -d "I'm done. Have a nice day!" \
@@ -57,6 +56,7 @@ function notify() {
             -H "Tags: monkey" \
             "$NTFY_SERVER/$NTFY_TOPIC" >/dev/null 2>&1
     fi
+    dialog --erase-on-exit --title "OTTO" --msgbox "            ~\n         o{°_°}o\n          /(.)~[*O]\n           / \\\n--------------------------\nAll done! Have a nice day.\n--------------------------" 11 30
 }
 
 CONFIG="$HOME/.otto.cfg"
@@ -238,7 +238,6 @@ if [ ! -z "$gpx" ]; then
         track=$(ls "$gpx")
         exiftool -q -q -m -overwrite_original -geotag "$track" -geosync=180 "$ENDPOINT" >>"/tmp/otto.log" 2>&1
     elif [ "$fcount" -gt "1" ]; then
-        cd "$gpx"
         ff=""
         for f in *.gpx; do
             ff="$ff -f $f"
