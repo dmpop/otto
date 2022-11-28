@@ -89,12 +89,14 @@ while getopts "d:g:c:bt:k:" opt; do
 done
 shift $((OPTIND - 1))
 
+yyyy=$(date +%Y)
+
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
     dialog --erase-on-exit --title "Otto configuration" \
         --form "\n          Specify the required settings" 16 56 8 \
         "      Destination:" 1 4 "$HOME/OTTO" 1 23 25 512 \
-        " Copyright notice:" 2 4 "© YYYY Full Name" 2 23 25 512 \
+        "           Author:" 2 4 "Full Name" 2 23 25 512 \
         "      ntfy server:" 3 4 "ntfy.sh" 3 23 25 512 \
         "       ntfy topic:" 4 4 "unique-string" 4 23 25 512 \
         "    Remote server:" 5 4 "hello.xyz" 5 23 25 512 \
@@ -105,7 +107,7 @@ if [ ! -f "$CONFIG" ]; then
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
         destination=$(sed -n 1p /tmp/dialog.tmp)
-        copyright=$(sed -n 2p /tmp/dialog.tmp)
+        author=$(sed -n 2p /tmp/dialog.tmp)
         ntfy_server=$(sed -n 3p /tmp/dialog.tmp)
         ntfy_topic=$(sed -n 4p /tmp/dialog.tmp)
         remote_server=$(sed -n 5p /tmp/dialog.tmp)
@@ -113,7 +115,7 @@ if [ ! -f "$CONFIG" ]; then
         remote_user=$(sed -n 7p /tmp/dialog.tmp)
         password=$(sed -n 8p /tmp/dialog.tmp)
         echo "DESTINATION=\"$destination\"" >>"$CONFIG"
-        echo "COPYRIGHT=\"$copyright\"" >>"$CONFIG"
+        echo "AUTHOR=\"$author\"" >>"$CONFIG"
         echo "NTFY_SERVER=\"$ntfy_server\"" >>"$CONFIG"
         echo "NTFY_TOPIC=\"$ntfy_topic\"" >>"$CONFIG"
         echo "REMOTE_SERVER=\"$remote_server\"" >>"$CONFIG"
@@ -194,7 +196,7 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -q -q -m -overwrite_original -copyright="$copyright" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
+    exiftool -q -q -m -overwrite_original -copyright="Copyright $yyyy $AUTHOR" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
 done
 
 # Geotag files
