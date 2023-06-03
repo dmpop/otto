@@ -37,12 +37,13 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 
 ## Usage
 
-    otto.sh -d <dir> -g <location> -c <dir> -b -k "keyword1, keyword2, keyword3"
+    otto.sh -d <dir> -g <location> -c <dir> -b -i -k "keyword1, keyword2, keyword3"
 
 - `-d` absolute path to the source directory
 - `-g` name of the city where the photos were taken
 - `-c` path to a directory containing one or several GPX files
 - `-b` perform backup only
+- `-i` Perform backup to an individual directory named after the current date
 - `-k` write specified keywords into EXIF medata
 
 ## Problems?

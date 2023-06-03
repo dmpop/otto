@@ -33,7 +33,7 @@ $0 transfers, geotags, adds metadata, and organizes photos and RAW files.
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -t "This is text" -k "keyword1, keyword2, keyword3"
+  $0 -d <dir> -g <location> -c <dir> -b -i -t "This is text" -k "keyword1, keyword2, keyword3"
   
 OPTIONS:
 --------
@@ -41,6 +41,7 @@ OPTIONS:
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files
   -b Perform backup only
+  -i Perform backup to an individual directory named after the current date
   -t Write the specified text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
 EOF
@@ -62,7 +63,7 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bt:k:" opt; do
+while getopts "d:g:c:bit:k:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -75,6 +76,9 @@ while getopts "d:g:c:bt:k:" opt; do
         ;;
     b)
         backup=1
+        ;;
+    i)
+        ind=1
         ;;
     t)
         text=$OPTARG
@@ -160,7 +164,18 @@ mkdir -p "$ENDPOINT"
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
     dialog --infobox "Transferring files..." 3 26
-    rsync -avh "$src" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+    rsync -avh "$src/" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+    clear
+    notify
+    exit 1
+fi
+
+# If -u parameter specified, perform a simple backup
+# to a dedicated directory named after the current date
+if [ ! -z "$ind" ]; then
+    d=$(date -d "today" +"%Y-%m-%d")
+    dialog --infobox "Transferring files..." 3 26
+    rsync -avh "$src/" "$ENDPOINT/$d" >>"/tmp/otto.log" 2>&1
     clear
     notify
     exit 1
