@@ -29,11 +29,12 @@ usage() {
     cat <<EOF
 $0 [OPTIONS]
 ------
-$0 transfers, geotags, adds metadata, and organizes photos and RAW files.
+$0 transfers, geotags, adds metadata, organizes photos and RAW files, generates EXIF-based stats.
 
 USAGE:
 ------
   $0 -d <dir> -g <location> -c <dir> -b -i -t "This is text" -k "keyword1, keyword2, keyword3"
+  $0 -d <dir> -s <EXIF tag>
   
 OPTIONS:
 --------
@@ -44,6 +45,7 @@ OPTIONS:
   -i Perform backup to an individual directory named after the current date
   -t Write the specified text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
+  -s Generate stats for the given EXIF tag
 EOF
     exit 1
 }
@@ -63,7 +65,7 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bit:k:" opt; do
+while getopts "d:g:c:bit:k:s:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -85,6 +87,9 @@ while getopts "d:g:c:bit:k:" opt; do
         ;;
     k)
         keywords=$OPTARG
+        ;;
+    s)
+        exif_tag=$OPTARG
         ;;
     \?)
         usage
@@ -160,6 +165,21 @@ fi
 srcdir=$(basename "$src")
 ENDPOINT="$DESTINATION/$srcdir"
 mkdir -p "$ENDPOINT"
+
+# If -s parameter specified, generate stats for the given EXIF tag
+if [ ! -z "$exif_tag" ]; then
+    dialog --infobox "Generating $exif_tag stats..." 3 41
+    results=$(mktemp)
+    exiftool -r -q -q -m "-$exif_tag" "$src" | cut -d":" -f2 >>"$results"
+    if [ -f "$src/$exif_tag.csv" ]; then
+        rm "$src/$exif_tag.csv"
+    fi
+    echo "$exif_tag, Count," >>"$src/$exif_tag.csv"
+    sort "$results" | uniq -c | awk '{print $0 ", " $1 ","}' | awk '{$1=""; print $0}' | awk '{$1=$1;print}' >>"$src/$exif_tag.csv"
+    clear
+    notify
+    exit 1
+fi
 
 # If -b parameter specified, perform a simple backup
 if [ ! -z "$backup" ]; then
