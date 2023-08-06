@@ -37,7 +37,10 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 
 ## Usage
 
-    otto.sh -d <dir> -g <location> -c <dir> -b -i -k "keyword1, keyword2, keyword3"
+```
+otto.sh -d <dir> -g <location> -c <dir> -b -i -k "keyword1, keyword2, keyword3"
+otto.sh -d <dir> -s <exif_tag>
+```
 
 - `-d` absolute path to the source directory
 - `-g` name of the city where the photos were taken
@@ -45,6 +48,7 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 - `-b` perform backup only
 - `-i` Perform backup to an individual directory named after the current date
 - `-k` write specified keywords into EXIF medata
+- `-s` Generate stats for the given EXIF tag
 
 ## Problems?
 

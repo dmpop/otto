@@ -170,12 +170,12 @@ mkdir -p "$ENDPOINT"
 if [ ! -z "$exif_tag" ]; then
     dialog --infobox "Generating $exif_tag stats..." 3 41
     results=$(mktemp)
-    exiftool -r -q -q -m "-$exif_tag" "$src" | cut -d":" -f2 >>"$results"
-    if [ -f "$src/$exif_tag.csv" ]; then
-        rm "$src/$exif_tag.csv"
+    exiftool -r -T "-$exif_tag" "$src" >"$results"
+    if [ -f "$HOME/$exif_tag.csv" ]; then
+        rm "$HOME/$exif_tag.csv"
     fi
-    echo "$exif_tag, Count," >>"$src/$exif_tag.csv"
-    sort "$results" | uniq -c | awk '{print $0 ", " $1 ","}' | awk '{$1=""; print $0}' | awk '{$1=$1;print}' >>"$src/$exif_tag.csv"
+    echo "$exif_tag, Count," >>"$HOME/$exif_tag.csv"
+    sort "$results" | uniq -c | awk '{print $0 ", " $1 ","}' | awk '{$1=""; print $0}' | awk '{$1=$1;print}' >>"$HOME/$exif_tag.csv"
     clear
     notify
     exit 1
