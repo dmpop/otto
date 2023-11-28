@@ -19,8 +19,12 @@
 # Source code: https://github.com/dmpop/otto
 
 # Check whether the required packages are installed
-if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || [ ! -x "$(command -v rsync)" ] || [ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
-    echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, sshpass, rsync, gpsbabel"
+if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || \
+[ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || \
+[ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || \
+[ ! -x "$(command -v exiv2)" ] || [ ! -x "$(command -v rsync)" ] || \
+[ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
+    echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, exiv2, sshpass, rsync, gpsbabel"
     exit 1
 fi
 
@@ -33,7 +37,7 @@ $0 transfers, geotags, adds metadata, organizes photos and RAW files, generates 
 
 USAGE:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -i -t "This is text" -k "keyword1, keyword2, keyword3"
+  $0 -d <dir> -g <location> -c <dir> -b -i -t "This is text" -k "keyword1 keyword2 keyword3"
   $0 -d <dir> -s <EXIF tag>
   
 OPTIONS:
@@ -201,11 +205,6 @@ if [ ! -z "$ind" ]; then
     exit 1
 fi
 
-# Check whether keywords are specified
-if [ -z "$keywords" ]; then
-    keywords=""
-fi
-
 dialog --infobox "Transferring and renaming files..." 3 39
 cd "$src"
 exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
@@ -231,7 +230,12 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
-    exiftool -q -q -m -overwrite_original -copyright="Copyright $yyyy $AUTHOR" -comment="$camera $lens $note" -sep ", " -keywords="$keywords" "$file" >>"/tmp/otto.log" 2>&1
+    exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $note" "$file" >>"/tmp/otto.log" 2>&1
+    exiv2 --Modify "set Exif.Image.Copyright $yyyy $AUTHOR" "$file" >>"/tmp/otto.log" 2>&1
+    # Check whether keywords are specified
+    if [ ! -z "$keywords" ]; then
+        exiv2 --Modify "set Iptc.Application2.Keywords $keywords" "$file" >>"/tmp/otto.log" 2>&1
+    fi
 done
 
 # Geotag files
