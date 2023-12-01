@@ -223,26 +223,17 @@ exit
 
 dialog --infobox "Writing EXIF metadata..." 3 28
 cd "$ENDPOINT"
-# Obtain and write copyright camera model, lens, and note
+# Obtain and write copyright camera model, lens, and weather
 for file in "*.*"; do
     date=$(exiftool -q -q -m -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
-    wf=$date".txt"
-    if [ ! -z "$text" ]; then
-        note="$text"
-    elif [ ! -z "$REMOTE_SERVER" ]; then
-        sshpass -p "$PASSWORD" rsync -ave ssh "$REMOTE_USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "/tmp/" >>"/tmp/otto.log" 2>&1
-        if [ -f "/tmp/$wf" ]; then
-            note=$(<"/tmp/$wf")
-        fi
-    else
-        note=""
-    fi
+    hour=$(exiftool -q -q -m -DateTimeOriginal -d %H "$file" | cut -d":" -f2 | tr -d " ")
+    weather=$(curl "https://archive-api.open-meteo.com/v1/era5?latitude=$lat&longitude=$lon&start_date=$date&end_date=$date&hourly=temperature_2m,precipitation,wind_speed_10m" | jq '.hourly | .temperature_2m['$hour']')
     camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
     lens=$(exiftool -q -q -m -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
-    exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $note" "$file" >>"/tmp/otto.log" 2>&1
+    exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $weather" "$file" >>"/tmp/otto.log" 2>&1
     exiv2 --Modify "set Exif.Image.Copyright $yyyy $AUTHOR" "$file" >>"/tmp/otto.log" 2>&1
     # Check whether keywords are specified
     if [ ! -z "$keywords" ]; then
