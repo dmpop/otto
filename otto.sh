@@ -19,11 +19,11 @@
 # Source code: https://github.com/dmpop/otto
 
 # Check whether the required packages are installed
-if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] || \
-[ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] || \
-[ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] || \
-[ ! -x "$(command -v exiv2)" ] || [ ! -x "$(command -v rsync)" ] || \
-[ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
+if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] ||
+    [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] ||
+    [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] ||
+    [ ! -x "$(command -v exiv2)" ] || [ ! -x "$(command -v rsync)" ] ||
+    [ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
     echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, exiv2, sshpass, rsync, gpsbabel"
     exit 1
 fi
@@ -35,9 +35,12 @@ $0 [OPTIONS]
 ------
 $0 transfers, geotags, adds metadata, organizes photos and RAW files, generates EXIF-based stats.
 
-USAGE:
+EXAMPLES:
 ------
-  $0 -d <dir> -g <location> -c <dir> -b -i -t "This is text" -k "keyword1 keyword2 keyword3"
+  $0 -d <dir> -b
+  $0 -d <dir> -g <location> -t "This is text" -k "keyword1 keyword2 keyword3"
+  $0 -d <dir> -c <dir>
+  $0 -d <dir> -g <location> -r NEF
   $0 -d <dir> -s <EXIF tag>
   
 OPTIONS:
@@ -46,6 +49,7 @@ OPTIONS:
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files
   -b Perform backup only
+  -r Transfer RAW files in the specified format only
   -i Perform backup to an individual directory named after the current date
   -t Write the specified text into the Comment field on EXIF medata
   -k Write the specified keywords into EXIF medata
@@ -69,7 +73,7 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bit:k:s:" opt; do
+while getopts "d:g:c:bir:t:k:s:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -85,6 +89,9 @@ while getopts "d:g:c:bit:k:s:" opt; do
         ;;
     i)
         ind=1
+        ;;
+    r)
+        raw=$OPTARG
         ;;
     t)
         text=$OPTARG
@@ -207,7 +214,11 @@ fi
 
 dialog --infobox "Transferring and renaming files..." 3 39
 cd "$src"
-exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
+if [ ! -z "$raw" ]; then
+    exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' -ext $raw . >>"/tmp/otto.log" 2>&1
+else
+    exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
+fi
 
 dialog --infobox "Writing EXIF metadata..." 3 28
 cd "$ENDPOINT"
