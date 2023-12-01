@@ -13,7 +13,7 @@ Otto is a shell script for importing and organizing RAW and JPEG files.
 
 ## Features
 
-- Transfer files to the predefined destination directory.
+- Transfer all files or RAW files only to the predefined destination directory.
 - Rename the transferred files using the _YYYYMMDD-HHMMSS_ naming format.
 - For each photo, obtain camera model and lens model.
 - If enabled, fetch text notes for the dates corresponding to the dates of the photos.
