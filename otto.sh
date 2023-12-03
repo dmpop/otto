@@ -225,10 +225,10 @@ dialog --infobox "Writing EXIF metadata..." 3 28
 cd "$ENDPOINT"
 # Obtain and write copyright camera model, lens, and weather
 for file in "*.*"; do
-    date=$(exiftool -q -q -m -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
-    hour=$(exiftool -q -q -m -DateTimeOriginal -d %H "$file" | cut -d":" -f2 | tr -d " ")
+    date=$(exiv2 --key Exif.Photo.DateTimeOriginal -P t "$file" | cut -d" " -f1 | tr : -)
+    hour=$(exiv2 --key Exif.Photo.DateTimeOriginal -P t "$file" | cut -d" " -f2 | cut -d":" -f1)
     weather=$(curl "https://archive-api.open-meteo.com/v1/era5?latitude=$lat&longitude=$lon&start_date=$date&end_date=$date&hourly=temperature_2m,precipitation,wind_speed_10m" | jq '.hourly | .temperature_2m['$hour']')
-    camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
+    camera=$(exiv2 --key Exif.Image.Model -P t "$file")
     lens=$(exiftool -q -q -m -LensID "$file" | cut -d":" -f2)
     if [ -z "$lens" ]; then
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
