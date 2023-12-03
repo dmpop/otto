@@ -219,27 +219,6 @@ if [ ! -z "$raw" ]; then
 else
     exiftool -q -q -m -r -o "$ENDPOINT" -d "$DATE_FORMAT" '-FileName<DateTimeOriginal' . >>"/tmp/otto.log" 2>&1
 fi
-exit
-
-dialog --infobox "Writing EXIF metadata..." 3 28
-cd "$ENDPOINT"
-# Obtain and write copyright camera model, lens, and weather
-for file in "*.*"; do
-    date=$(exiv2 --key Exif.Photo.DateTimeOriginal -P t "$file" | cut -d" " -f1 | tr : -)
-    hour=$(exiv2 --key Exif.Photo.DateTimeOriginal -P t "$file" | cut -d" " -f2 | cut -d":" -f1)
-    weather=$(curl "https://archive-api.open-meteo.com/v1/era5?latitude=$lat&longitude=$lon&start_date=$date&end_date=$date&hourly=temperature_2m,precipitation,wind_speed_10m" | jq '.hourly | .temperature_2m['$hour']')
-    camera=$(exiv2 --key Exif.Image.Model -P t "$file")
-    lens=$(exiftool -q -q -m -LensID "$file" | cut -d":" -f2)
-    if [ -z "$lens" ]; then
-        lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
-    fi
-    exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $weather" "$file" >>"/tmp/otto.log" 2>&1
-    exiv2 --Modify "set Exif.Image.Copyright $yyyy $AUTHOR" "$file" >>"/tmp/otto.log" 2>&1
-    # Check whether keywords are specified
-    if [ ! -z "$keywords" ]; then
-        exiv2 --Modify "set Iptc.Application2.Keywords $keywords" "$file" >>"/tmp/otto.log" 2>&1
-    fi
-done
 
 # Geotag files
 if [ ! -z "$location" ]; then
@@ -293,6 +272,29 @@ if [ ! -z "$gpx" ]; then
         dialog --erase-on-exit --backtitle "ERROR" --msgbox "Something went wrong. Geotagging skipped." 6 25
     fi
 fi
+
+dialog --infobox "Writing EXIF metadata..." 3 28
+cd "$ENDPOINT"
+# Obtain and write copyright camera model, lens, and weather
+for file in *.*; do
+    lat=$(exiftool -s -GPSLatitude -n "$file" | cut -d":" -f2 | tr -d " ")
+    lon=$(exiftool -s -GPSLongitude -n "$file" | cut -d":" -f2 | tr -d " ")
+    date=$(exiv2 --key Exif.Photo.DateTimeOriginal -P t "$file" | cut -d" " -f1 | tr : -)
+    hour=$(exiv2 --key Exif.Photo.DateTimeOriginal -P t "$file" | cut -d" " -f2 | cut -d":" -f1)
+    weather=$(curl "https://archive-api.open-meteo.com/v1/era5?latitude=$lat&longitude=$lon&start_date=$date&end_date=$date&hourly=temperature_2m,precipitation,wind_speed_10m")
+    temp=$(echo $weather | jq '.hourly | .temperature_2m['$hour']')
+    camera=$(exiv2 --key Exif.Image.Model -P t "$file")
+    lens=$(exiftool -q -q -m -LensID "$file" | cut -d":" -f2)
+    if [ -z "$lens" ]; then
+        lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
+    fi
+    exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $temp" "$file" >>"/tmp/otto.log" 2>&1
+    exiv2 --Modify "set Exif.Image.Copyright $yyyy $AUTHOR" "$file" >>"/tmp/otto.log" 2>&1
+    # Check whether keywords are specified
+    if [ ! -z "$keywords" ]; then
+        exiv2 --Modify "set Iptc.Application2.Keywords $keywords" "$file" >>"/tmp/otto.log" 2>&1
+    fi
+done
 
 dialog --infobox "Organizing files..." 3 23
 cd "$ENDPOINT"
