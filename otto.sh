@@ -15,7 +15,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 
-# Author: Dmitri Popov, dmpop@linux.com
+# Author: Dmitri Popov, dmpop@cameracode.coffee
 # Source code: https://github.com/dmpop/otto
 
 # Check whether the required packages are installed
@@ -23,8 +23,18 @@ if [ ! -x "$(command -v dialog)" ] || [ ! -x "$(command -v getopt)" ] ||
     [ ! -x "$(command -v bc)" ] || [ ! -x "$(command -v jq)" ] ||
     [ ! -x "$(command -v curl)" ] || [ ! -x "$(command -v exiftool)" ] ||
     [ ! -x "$(command -v exiv2)" ] || [ ! -x "$(command -v rsync)" ] ||
-    [ ! -x "$(command -v sshpass)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
-    echo "Make sure that the following tools are installed on your system: dialog, getopt, bc, jq, curl, exiftool, exiv2, sshpass, rsync, gpsbabel"
+    [ ! -x "$(command -v wget)" ] || [ ! -x "$(command -v gpsbabel)" ]; then
+    echo "Make sure that the following tools are installed on your system:"
+    echo "dialog"
+    echo "getopt"
+    echo "bc"
+    echo "jq"
+    echo "curl"
+    echo "exiftool"
+    echo "exiv2"
+    echo "wget"
+    echo "rsync"
+    echo "gpsbabel"
     exit 1
 fi
 
@@ -41,7 +51,7 @@ EXAMPLES:
   $0 -d <dir> -g <location> -t "This is text" -k "keyword1 keyword2 keyword3"
   $0 -d <dir> -c <dir>
   $0 -d <dir> -g <location> -r NEF
-  $0 -d <dir> -s <EXIF tag>
+  $0 -d <dir> -e <EXIF tag>
   
 OPTIONS:
 --------
@@ -49,10 +59,10 @@ OPTIONS:
   -g Geotag using coordinates of the specified location (city)
   -c path to a directory containing one or several GPX files
   -b Perform backup only
+  -s Perform backup to an individual directory named after the current date
   -r Transfer RAW files in the specified format only
-  -i Perform backup to an individual directory named after the current date
-  -t Write the specified text into the Comment field on EXIF medata
-  -k Write the specified keywords into EXIF medata
+  -t Write the specified text into the Comment field of EXIF metadata
+  -k Write the specified keywords into EXIF metadata
   -s Generate stats for the given EXIF tag
 EOF
     exit 1
@@ -73,7 +83,7 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bir:t:k:s:" opt; do
+while getopts "d:g:c:bsr:t:k:e:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -87,8 +97,8 @@ while getopts "d:g:c:bir:t:k:s:" opt; do
     b)
         backup=1
         ;;
-    i)
-        ind=1
+    s)
+        sep=1
         ;;
     r)
         raw=$OPTARG
@@ -99,7 +109,7 @@ while getopts "d:g:c:bir:t:k:s:" opt; do
     k)
         keywords=$OPTARG
         ;;
-    s)
+    e)
         exif_tag=$OPTARG
         ;;
     \?)
@@ -114,15 +124,12 @@ yyyy=$(date +%Y)
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
     dialog --erase-on-exit --title "Otto configuration" \
-        --form "\n          Specify the required settings" 16 56 8 \
-        "      Destination:" 1 4 "$HOME/OTTO" 1 23 25 512 \
-        "           Author:" 2 4 "Full Name" 2 23 25 512 \
-        "      ntfy server:" 3 4 "ntfy.sh" 3 23 25 512 \
-        "       ntfy topic:" 4 4 "unique-string" 4 23 25 512 \
-        "    Remote server:" 5 4 "hello.xyz" 5 23 25 512 \
-        "      Remote path:" 6 4 "/var/www/html/data" 6 23 25 512 \
-        "      Remote user:" 7 4 "Remote user name" 7 23 25 512 \
-        "        Password:" 8 4 "Remote user password" 8 23 25 512 \
+        --form "\n          Specify the required settings" 13 56 5 \
+        "      Destination:" 1 4 "$HOME/OTTO" 1 17 32 512 \
+        "           Author:" 2 4 "Full Name" 2 17 32 512 \
+        "      ntfy server:" 3 4 "ntfy.sh" 3 17 32 512 \
+        "       ntfy topic:" 4 4 "unique-string" 4 17 32 512 \
+        "         Note URL:" 5 4 "https://hello.xyz/path/to/notes" 5 17 32 1024 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
@@ -130,18 +137,12 @@ if [ ! -f "$CONFIG" ]; then
         author=$(sed -n 2p /tmp/dialog.tmp)
         ntfy_server=$(sed -n 3p /tmp/dialog.tmp)
         ntfy_topic=$(sed -n 4p /tmp/dialog.tmp)
-        remote_server=$(sed -n 5p /tmp/dialog.tmp)
-        remote_path=$(sed -n 6p /tmp/dialog.tmp)
-        remote_user=$(sed -n 7p /tmp/dialog.tmp)
-        password=$(sed -n 8p /tmp/dialog.tmp)
+        note_url=$(sed -n 5p /tmp/dialog.tmp)
         echo "DESTINATION=\"$destination\"" >>"$CONFIG"
         echo "AUTHOR=\"$author\"" >>"$CONFIG"
         echo "NTFY_SERVER=\"$ntfy_server\"" >>"$CONFIG"
         echo "NTFY_TOPIC=\"$ntfy_topic\"" >>"$CONFIG"
-        echo "REMOTE_SERVER=\"$remote_server\"" >>"$CONFIG"
-        echo "REMOTE_PATH=\"$remote_path\"" >>"$CONFIG"
-        echo "REMOTE_USER=\"$remote_user\"" >>"$CONFIG"
-        echo "PASSWORD=\"$password\"" >>"$CONFIG"
+        echo "NOTE_URL=\"$note_url\"" >>"$CONFIG"
         echo "DATE_FORMAT=\"%Y%m%d-%H%M%S%%-c.%%e\"" >>"$CONFIG"
         rm -f /tmp/dialog.tmp
     else
@@ -203,7 +204,7 @@ fi
 
 # If -u parameter specified, perform a simple backup
 # to a dedicated directory named after the current date
-if [ ! -z "$ind" ]; then
+if [ ! -z "$sep" ]; then
     d=$(date -d "today" +"%Y-%m-%d")
     dialog --infobox "Transferring files..." 3 26
     rsync -avh "$src/" "$ENDPOINT/$d" >>"/tmp/otto.log" 2>&1
@@ -228,8 +229,8 @@ for file in *.*; do
     wf=$date".txt"
     if [ ! -z "$text" ]; then
         note="$text"
-    elif [ ! -z "$REMOTE_SERVER" ]; then
-        sshpass -p "$PASSWORD" rsync -ave ssh "$REMOTE_USER@$REMOTE_SERVER:$REMOTE_PATH/$wf" "/tmp/" >>"/tmp/otto.log" 2>&1
+    elif [ ! -z "$NOTE_URL" ]; then
+        wget "$NOTE_URL/$wf" -O "/tmp/$wf" >>"/tmp/otto.log" 2>&1
         if [ -f "/tmp/$wf" ]; then
             note=$(<"/tmp/$wf")
         fi

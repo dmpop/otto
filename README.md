@@ -27,28 +27,33 @@ Otto is a shell script for importing and organizing RAW and JPEG files.
 
 # Dependencies
 
-Otto requires the following tools: `dialog`, `getopt`, `bc`, `jq`, `cURL`, `ExifTool`, `Rsync`, `sshpass`, `GPSbabel`
+Otto requires the following tools: `dialog`, `getopt`, `bc`, `jq`, `cURL`, `ExifTool`, `Exiv2`, `Rsync`, `wget`, `GPSbabel`
 
 # Installation and usage
 
 The [Linux Photography](https://gumroad.com/l/linux-photography) book provides detailed instructions on installing and using Otto. Get your copy at [Google Play Store](https://play.google.com/store/books/details/Dmitri_Popov_Linux_Photography?id=cO70CwAAQBAJ) or [Gumroad](https://gumroad.com/l/linux-photography).
 
-<img src="https://cameracode.coffee/uploads/linux-photography.png" title="Linux Photography book" width="300"/>
+<img src="https://cameracode.coffee/uploads/linux-photography.png" title="Linux Photography" width="300"/>
 
-## Usage
+## Example commands
 
 ```
-otto.sh -d <dir> -g <location> -c <dir> -b -i -k "keyword1, keyword2, keyword3"
-otto.sh -d <dir> -s <exif_tag>
+./otto.sh -d <dir> -b
+./otto.sh -d <dir> -g <location> -t "This is text" -k "keyword1 keyword2 keyword3"
+./otto.sh -d <dir> -c <dir>
+./otto.sh -d <dir> -g <location> -r NEF
+./otto.sh -d <dir> -e <EXIF tag>
 ```
 
 - `-d` absolute path to the source directory
 - `-g` name of the city where the photos were taken
 - `-c` path to a directory containing one or several GPX files
 - `-b` perform backup only
-- `-i` Perform backup to an individual directory named after the current date
-- `-k` write specified keywords into EXIF medata
-- `-s` Generate stats for the given EXIF tag
+- `-s` Perform backup to an individual directory named after the current date
+- `-r` Transfer RAW files in the specified format only
+- `-t` Write the specified text into the Comment field of EXIF metadata
+- `-k` write specified keywords into EXIF metadata
+- `-e` Generate stats for the given EXIF tag
 
 ## Problems?
 
@@ -68,7 +73,7 @@ To add a new feature or fix issues yourself, follow the following steps.
 
 ## Author
 
-Dmitri Popov [dmpop@linux.com](mailto:dmpop@linux.com)
+Dmitri Popov [dmpop@cameracode.coffee](mailto:cameracode.coffee)
 
 ## License
 
