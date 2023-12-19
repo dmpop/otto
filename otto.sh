@@ -253,7 +253,7 @@ done
 # Geotag files
 if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
-    check=$(wget -q --spider https://photon.komoot.io/)
+    check=$(curl -Is https://photon.komoot.io/ | head -n 1)
     if [ ! -z "$check" ]; then
         dialog --erase-on-exit --backtitle "ERROR" --msgbox "Photon is not reachable. Geotagging skipped." 6 28
     else
