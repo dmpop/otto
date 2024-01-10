@@ -21,6 +21,7 @@ Otto is a shell script for importing and organizing RAW and JPEG files.
 - Write the predefined copyright notice to the **Copyright** field of each photo's EXIF metadata.
 - If keywords are specified, write them into each photo's EXIF metadata.
 - Geotag photos using the geographical coordinates of the specified city.
+- Geotag photos using exact geographical coordinates and altitude.
 - Merge multiple GPX tracks and geocorrelate photos using the resulting GPX file.
 - Group the transferred files into folders by date using the _YYYY-MM-DD_ naming format.
 - Notify on job completion via [ntfy](http://ntfy.sh).
@@ -40,6 +41,7 @@ The [Linux Photography](https://gumroad.com/l/linux-photography) book provides d
 ```
 ./otto.sh -d <dir> -b
 ./otto.sh -d <dir> -g <location> -t "This is text" -k "keyword1 keyword2 keyword3"
+./otto.sh -d <dir> -l "34.704364,135.501887"
 ./otto.sh -d <dir> -c <dir>
 ./otto.sh -d <dir> -g <location> -r NEF
 ./otto.sh -d <dir> -e <EXIF tag>

@@ -50,6 +50,7 @@ EXAMPLES:
   $0 -d <dir> -b
   $0 -d <dir> -g <location> -t "This is text" -k "keyword1 keyword2 keyword3"
   $0 -d <dir> -c <dir>
+  $0 -d <dir> -l "34.704364,135.501887,161"
   $0 -d <dir> -g <location> -r NEF
   $0 -d <dir> -e <EXIF tag>
   
@@ -57,6 +58,7 @@ OPTIONS:
 --------
   -d Specifies the source directory
   -g Geotag using coordinates of the specified location (city)
+  -l Geotag using the exact geographical coordinates in the "lat,lon,alt" format
   -c path to a directory containing one or several GPX files
   -b Perform backup only
   -s Perform backup to an individual directory named after the current date
@@ -83,13 +85,16 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:c:bsr:t:k:e:" opt; do
+while getopts "d:g:l:c:bsr:t:k:e:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
         ;;
     g)
         location=$OPTARG
+        ;;
+    l)
+        latlonalt=$OPTARG
         ;;
     c)
         gpx=$OPTARG
@@ -250,7 +255,25 @@ for file in *.*; do
     fi
 done
 
-# Geotag files
+# Geotag if $latlon is not empty
+if [ ! -z "$latlonalt" ]; then
+    IFS=,
+    read lat lon alt <<<$latlonalt
+    if (($(echo "$lat > 0" | bc -l))); then
+        latref="N"
+    else
+        latref="S"
+    fi
+    if (($(echo "$lon > 0" | bc -l))); then
+        lonref="E"
+    else
+        lonref="W"
+    fi
+    dialog --infobox "Geotagging..." 3 17
+    exiftool -q -q -m -overwrite_original -GPSLatitude=$lat -GPSLatitudeRef=$latref -GPSLongitude=$lon -GPSLongitudeRef=$lonref -GPSAltitude=$alt . >>"/tmp/otto.log" 2>&1
+fi
+
+# Geotag files if $location is not empty
 if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
     check=$(curl -Is https://photon.komoot.io/ | head -n 1)
