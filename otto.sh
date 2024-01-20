@@ -277,7 +277,7 @@ fi
 if [ ! -z "$location" ]; then
     # Check whether the Photon service is reachable
     check=$(curl -Is https://photon.komoot.io/ | head -n 1)
-    if [ ! -z "$check" ]; then
+    if [ -z "$check" ]; then
         dialog --erase-on-exit --backtitle "ERROR" --msgbox "Photon is not reachable. Geotagging skipped." 6 28
     else
         # Obtain latitude and longitude for the specified location
