@@ -32,7 +32,7 @@ sudo apt update
 sudo apt upgrade -y
 
 cd
-sudo apt install git dialog bc jq curl exiftool rsync sshpass gpsbabel screen usbmount exfat-fuse exfat-utils
+sudo apt install git dialog bc jq curl exiftool exiv2 rsync wget gpsbabel screen usbmount exfat-fuse exfat-utils
 git clone https://github.com/dmpop/otto.git
 sudo ln -s $HOME/otto/otto.sh /usr/local/bin/otto
 sudo mv /etc/usbmount/usbmount.conf /etc/usbmount/usbmount.conf.bak
