@@ -129,12 +129,12 @@ yyyy=$(date +%Y)
 # Ask for the required info and write the obtained values into the configuration file
 if [ ! -f "$CONFIG" ]; then
     dialog --erase-on-exit --title "Otto configuration" \
-        --form "\n          Specify the required settings" 13 56 5 \
-        "      Destination:" 1 4 "$HOME/OTTO" 1 17 32 512 \
-        "           Author:" 2 4 "Full Name" 2 17 32 512 \
-        "      ntfy server:" 3 4 "ntfy.sh" 3 17 32 512 \
-        "       ntfy topic:" 4 4 "unique-string" 4 17 32 512 \
-        "         Note URL:" 5 4 "https://hello.xyz/path/to/notes" 5 17 32 1024 \
+        --form "\n          Specify the required settings" 13 65 5 \
+        "      Destination:" 1 4 "$HOME/OTTO" 1 23 35 512 \
+        "           Author:" 2 4 "Full Name" 2 23 35 512 \
+        "      ntfy server:" 3 4 "ntfy.sh" 3 23 35 512 \
+        "       ntfy topic:" 4 4 "unique-string" 4 23 35 512 \
+        "         Note URL:" 5 4 "https://hello.xyz/path/to/notes" 5 23 35 1024 \
         >/tmp/dialog.tmp \
         2>&1 >/dev/tty
     if [ -s "/tmp/dialog.tmp" ]; then
