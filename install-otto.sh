@@ -15,7 +15,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 
-# Author: Dmitri Popov, dmpop@linux.com
+# Author: Dmitri Popov, dmpop@cameracode.coffee
 # Source code: https://github.com/dmpop/otto
 
 if [ ! -x "$(command -v apt)" ]; then
@@ -32,22 +32,12 @@ sudo apt update
 sudo apt upgrade -y
 
 cd
-sudo apt install git dialog bc jq curl exiftool exiv2 rsync wget gpsbabel screen usbmount exfat-fuse exfat-utils
+sudo apt update
+sudo apt upgrade
+sudo apt install git dialog bc jq curl exiftool exiv2 rsync wget gpsbabel exfat-fuse exfat-utils
 git clone https://github.com/dmpop/otto.git
-sudo ln -s $HOME/otto/otto.sh /usr/local/bin/otto
-sudo mv /etc/usbmount/usbmount.conf /etc/usbmount/usbmount.conf.bak
-sudo bash -c "cat > /etc/usbmount/usbmount.conf" << EOL
-ENABLED=1
-MOUNTPOINTS="/media/usb0 /media/usb1 /media/usb2 /media/usb3
-             /media/usb4 /media/usb5 /media/usb6 /media/usb7"
-FILESYSTEMS="vfat exfat ext2 ext3 ext4 hfsplus"
-MOUNTOPTIONS="sync,noexec,nodev,noatime,nodiratime,uid=1000,gid=1000"
-FS_MOUNTOPTIONS=" "
-VERBOSE=no
-EOL
-crontab -l | {
-        cat
-        echo "@reboot sudo /home/"$USER"/otto/ip.sh"
-        } | crontab
-echo "All done. The system will reboot now."
-sudo reboot
+chmod +x otto/*.sh
+mkdir -p $HOME/storage
+mkdir -p $HOME/bin
+echo "PATH=$HOME/bin:$PATH" >> ~/.bashrc
+ln -s $HOME/otto/otto.sh $HOME/bin/otto
