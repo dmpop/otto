@@ -65,7 +65,7 @@ OPTIONS:
   -r Transfer RAW files in the specified format only
   -t Write the specified text into the Comment field of EXIF metadata
   -k Write the specified keywords into EXIF metadata
-  -s Generate stats for the given EXIF tag
+  -e Generate stats for the given EXIF tag
 EOF
     exit 1
 }
@@ -101,9 +101,6 @@ while getopts "d:g:l:c:bsr:t:k:e:" opt; do
         ;;
     b)
         backup=1
-        ;;
-    s)
-        sep=1
         ;;
     r)
         raw=$OPTARG
@@ -202,17 +199,6 @@ fi
 if [ ! -z "$backup" ]; then
     dialog --infobox "Transferring files..." 3 26
     rsync -avh "$src/" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
-    clear
-    notify
-    exit 1
-fi
-
-# If -u parameter specified, perform a simple backup
-# to a dedicated directory named after the current date
-if [ ! -z "$sep" ]; then
-    d=$(date -d "today" +"%Y-%m-%d")
-    dialog --infobox "Transferring files..." 3 26
-    rsync -avh "$src/" "$ENDPOINT/$d" >>"/tmp/otto.log" 2>&1
     clear
     notify
     exit 1
