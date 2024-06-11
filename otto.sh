@@ -48,11 +48,12 @@ $0 transfers, geotags, adds metadata, organizes photos and RAW files, generates 
 EXAMPLES:
 ------
   $0 -d <dir> -b
+  $0 -d <dir> -u
   $0 -d <dir> -g <location> -t "This is text" -k "keyword1 keyword2 keyword3"
   $0 -d <dir> -c <dir>
   $0 -d <dir> -l "34.704364,135.501887,161"
   $0 -d <dir> -g <location> -r NEF
-  $0 -d <dir> -e <EXIF tag>
+  $0 -d <dir> -s <EXIF tag>
   
 OPTIONS:
 --------
@@ -61,9 +62,9 @@ OPTIONS:
   -l Geotag using the exact geographical coordinates in the "lat,lon,alt" format
   -c path to a directory containing one or several GPX files
   -b Perform backup only
-  -s Perform backup to an individual directory named after the current date
+  -u Perform backup to an individual directory named after the current date
   -r Transfer RAW files in the specified format only
-  -t Write the specified text into the Comment field of EXIF metadata
+  -t Write the specified text into the UserComment field of EXIF metadata
   -k Write the specified keywords into EXIF metadata
   -e Generate stats for the given EXIF tag
 EOF
@@ -85,7 +86,7 @@ function notify() {
 CONFIG="$HOME/.otto.cfg"
 
 # Obtain parameter values
-while getopts "d:g:l:c:bsr:t:k:e:" opt; do
+while getopts "d:g:l:c:but:r:k:s:" opt; do
     case ${opt} in
     d)
         src=$OPTARG
@@ -102,16 +103,19 @@ while getopts "d:g:l:c:bsr:t:k:e:" opt; do
     b)
         backup=1
         ;;
-    r)
-        raw=$OPTARG
+    u)
+        currd=1
         ;;
     t)
         text=$OPTARG
         ;;
+    r)
+        raw=$OPTARG
+        ;;
     k)
         keywords=$OPTARG
         ;;
-    e)
+    s)
         exif_tag=$OPTARG
         ;;
     \?)
@@ -199,6 +203,17 @@ fi
 if [ ! -z "$backup" ]; then
     dialog --infobox "Transferring files..." 3 26
     rsync -avh "$src/" "$ENDPOINT" >>"/tmp/otto.log" 2>&1
+    clear
+    notify
+    exit 1
+fi
+
+# If -u parameter specified, perform a simple backup
+# to a dedicated directory named after the current date
+if [ ! -z "$currd" ]; then
+    d=$(date -d "today" +"%Y-%m-%d")
+    dialog --infobox "Transferring files..." 3 26
+    rsync -avh "$src/" "$ENDPOINT/$d" >>"/tmp/otto.log" 2>&1
     clear
     notify
     exit 1
