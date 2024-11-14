@@ -248,6 +248,7 @@ for file in *.*; do
     if [ -z "$lens" ]; then
         lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
     fi
+    exiv2 --Modify "set Exif.Image.ImageDescription $camera $lens $note" "$file" >>"/tmp/otto.log" 2>&1
     exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $note" "$file" >>"/tmp/otto.log" 2>&1
     exiv2 --Modify "set Exif.Image.Copyright $yyyy $AUTHOR" "$file" >>"/tmp/otto.log" 2>&1
     # Check whether keywords are specified
