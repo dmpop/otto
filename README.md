@@ -75,7 +75,7 @@ To add a new feature or fix issues yourself, follow the following steps.
 
 ## Author
 
-Dmitri Popov [dmpop@cameracode.coffee](mailto:cameracode.coffee)
+Dmitri Popov [dmpop@cameracode.coffee](mailto:me@cameracode.coffee)
 
 ## License
 

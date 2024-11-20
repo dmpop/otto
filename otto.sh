@@ -253,7 +253,10 @@ for file in *.*; do
     exiv2 --Modify "set Exif.Image.Copyright $yyyy $AUTHOR" "$file" >>"/tmp/otto.log" 2>&1
     # Check whether keywords are specified
     if [ ! -z "$keywords" ]; then
-        exiv2 --Modify "set Iptc.Application2.Keywords $keywords" "$file" >>"/tmp/otto.log" 2>&1
+        keywords_arr=($(echo "$keywords" | tr ', ' '\n'))
+        for k in ${keywords_arr[@]}; do
+            exiv2 --Modify "set Iptc.Application2.Keywords $k" "$file" >>"/tmp/otto.log" 2>&1
+        done
     fi
 done
 
