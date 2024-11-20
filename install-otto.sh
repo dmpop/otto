@@ -34,7 +34,7 @@ sudo apt upgrade -y
 cd
 sudo apt update
 sudo apt upgrade
-sudo apt install git dialog bc jq curl exiftool exiv2 rsync wget gpsbabel exfat-fuse exfat-utils
+sudo apt install git dialog bc jq curl exiftool exiv2 rsync wget gpsbabel exfat-fuse exfatprogs
 git clone https://github.com/dmpop/otto.git
 chmod +x otto/*.sh
 mkdir -p $HOME/storage
