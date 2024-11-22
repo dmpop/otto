@@ -255,7 +255,7 @@ for file in *.*; do
     if [ ! -z "$keywords" ]; then
         keywords_arr=($(echo "$keywords" | tr ', ' '\n'))
         for k in ${keywords_arr[@]}; do
-            exiv2 --Modify "set Iptc.Application2.Keywords $k" "$file" >>"/tmp/otto.log" 2>&1
+            exiv2 --Modify "set Xmp.dc.subject $k" "$file" >>"/tmp/otto.log" 2>&1
         done
     fi
 done
