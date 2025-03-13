@@ -231,7 +231,7 @@ dialog --infobox "Writing EXIF metadata..." 3 28
 cd "$ENDPOINT"
 # Obtain and write copyright camera model, lens, and note
 for file in *.*; do
-    date=$(exiftool -q -q -m -DateTimeOriginal -d %Y-%m-%d "$file" | cut -d":" -f2 | tr -d " ")
+    date=$(exiftool -q -q -m -T -DateTimeOriginal -d %Y-%m-%d "$file")
     wf=$date".txt"
     if [ ! -z "$text" ]; then
         note="$text"
@@ -243,10 +243,10 @@ for file in *.*; do
     else
         note=""
     fi
-    camera=$(exiftool -Model "$file" | cut -d":" -f2 | tr -d " ")
-    lens=$(exiftool -q -q -m -LensID "$file" | cut -d":" -f2)
+    camera=$(exiftool -Model -T "$file")
+    lens=$(exiftool -q -q -m -T -LensID "$file")
     if [ -z "$lens" ]; then
-        lens=$(exiftool -q -q -m -LensModel "$file" | cut -d":" -f2)
+        lens=$(exiftool -q -q -m -T -LensModel "$file")
     fi
     exiv2 --Modify "set Exif.Image.ImageDescription $camera $lens $note" "$file" >>"/tmp/otto.log" 2>&1
     exiv2 --Modify "set Xmp.exif.UserComment $camera $lens $note" "$file" >>"/tmp/otto.log" 2>&1
